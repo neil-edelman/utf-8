@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <errno.h>
 
-
 int main(void) {
 	const char *const samples[] = {
 		"",
