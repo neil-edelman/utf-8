@@ -786,6 +786,7 @@ static const char *pT_(sanitize)(const char *str) {
 		const char s = *(str++);
 		if(s == '\0') { sanitized[i] = '\0'; return sanitized; }
 		else if((s & 0x80) == 0 && !isgraph(s)) {
+			sanitized[i++] = 'x';
 			sanitized[i++] = hex[s >> 4u];
 			sanitized[i++] = hex[s & 0x0f];
 			continue;
@@ -829,10 +830,22 @@ static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
 		const char *params, *start, *end;
 		struct { unsigned br0, br1; } in_tree;
 		const unsigned is_link = trie_bmp_test(&tree->bmp, i);
+
+		struct mutf8 *data;
+		{
+			union { const struct pT_(bough) *readonly; struct pT_(bough) *promise; }
+				slybox;
+			struct pT_(ref) ref;
+			slybox.readonly = tree, ref.tree = slybox.promise, ref.lf = i;
+			pT_(lower_entry)(&ref);
+			data = pT_(ref_to_remit)(&ref);
+		}
+
 		/* 0-width joiner "&#8288;": GraphViz gets upset when tag closed
 		 immediately. */
 		fprintf(fp, "\t<tr>\n"
-			"\t\t<td align=\"left\" port=\"%u\">%s%s%s⊔</font></td>\n",
+			"\t\t<td align=\"left\"%s port=\"%u\">%s%s%s⊔</font></td>\n",
+			data->word ? " bgcolor=\"Red\"" : "",
 			i, is_link ? "↓<font color=\"Grey75\">" : "", pT_(sanitize)(key),
 			is_link ? "" : "<font color=\"Grey75\">");
 		in_tree.br0 = 0, in_tree.br1 = tree->bsize;
@@ -924,7 +937,7 @@ static void pT_(graph_tree_mem)(const struct pT_(bough) *const tree,
 		fprintf(fp, "\t\t<td align=\"left\" port=\"%u\"%s>"
 			"%s%s%s⊔</font></td>\n"
 			"\t</tr>\n",
-			i, bgc, is_link ? "↓<font color=\"Grey75\">" : "", key,
+			i, bgc, is_link ? "↓<font color=\"Grey75\">" : "", pT_(sanitize)(key),
 			is_link ? "" : "<font color=\"Grey75\">");
 			/* Should really escape it . . . don't have weird characters. */
 	}
@@ -1020,7 +1033,7 @@ static void pT_(graph_tree_logic)(const struct pT_(bough) *const tr,
 		slybox.readonly = tr, ref.tree = slybox.promise, ref.lf = i;
 		fprintf(fp,
 			"\ttree%pleaf%u [label = <%s<font color=\"Gray75\">⊔</font>>];\n",
-			(const void *)tr, i, pT_(ref_to_string)(&ref));
+			(const void *)tr, i, pT_(sanitize)(pT_(ref_to_string)(&ref)));
 	}
 
 	for(i = 0; i <= tr->bsize; i++) if(trie_bmp_test(&tr->bmp, i))
