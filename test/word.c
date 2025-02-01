@@ -9,7 +9,7 @@ struct mutf8 {
 		Pc, Pd, Pe, Pf, Pi, Po, Ps, Sc, Sk, Sm, So, Zl, Zp, Zs }
 		category;
 	bool word;
-	unsigned char string[5];
+	char string[5];
 };
 static const char *mutf8_key(const struct mutf8 *const info)
 	{ return (const char *)info->string; }
@@ -111,18 +111,23 @@ int main(void) {
 		mutf8->category = cc;
 		mutf8->word = (cc == Ll || cc == Lu || cc == Lt || cc == Lo || cc == Nd);
 		if(input.unicode < 0x80) {
-			mutf8->string[0] = (unsigned char)input.unicode;
+			mutf8->string[0] = (char)input.unicode;
 			mutf8->string[1] = '\0';
 		} else if(input.unicode < 0x0800) {
-			mutf8->string[0] = 0xc0 | (unsigned char)(input.unicode >> 6u);
-			mutf8->string[1] = 0x80 | (unsigned char)(input.unicode & 0x3f);
+			mutf8->string[0] = 0xc0 | (char) (input.unicode >>  6u);
+			mutf8->string[1] = 0x80 | (char)( input.unicode         & 0x3f);
 			mutf8->string[2] = '\0';
 		} else if(input.unicode < 0x010000) {
-			mutf8->string[0] = '\0';
-			//assert(0);
+			mutf8->string[0] = 0xe0 | (char)(input.unicode  >> 12u);
+			mutf8->string[1] = 0x80 | (char)((input.unicode >>  6u) & 0x3f);
+			mutf8->string[2] = 0x80 | (char)( input.unicode         & 0x3f);
+			mutf8->string[3] = '\0';
 		} else if(input.unicode < 0x110000) {
-			mutf8->string[0] = '\0';
-			//assert(0);
+			mutf8->string[0] = 0xf0 | (char) (input.unicode >> 18u);
+			mutf8->string[1] = 0x80 | (char)((input.unicode >> 12u) & 0x3f);
+			mutf8->string[2] = 0x80 | (char)((input.unicode >>  6u) & 0x3f);
+			mutf8->string[3] = 0x80 | (char)( input.unicode         & 0x3f);
+			mutf8->string[4] = '\0';
 		} else {
 			fprintf(stderr, "Only supports 0x110_000 code points in unicode 16.0.\n");
 			goto catch;
