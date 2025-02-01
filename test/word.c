@@ -32,7 +32,8 @@ int main(void) {
 	char read[256];
 	struct mutf8_deque deque = mutf8_deque();
 	struct mutf8_trie trie = mutf8_trie();
-	struct mutf8 *mutf8;
+	struct mutf8 *mutf8 = 0, *last_mutf8;
+	enum { INITIAL, NOT, WORD } state = INITIAL;
 	errno = 0;
 	if(!(uni_fp = fopen(uni_fn, "r"))) { error = uni_fn; goto catch; }
 	while(fgets(read, sizeof read, uni_fp)) {
@@ -40,7 +41,9 @@ int main(void) {
 			unsigned unicode;
 			unsigned char category[4];
 		} input;
-		if(sscanf(read, "%x;%*[^;];%3[^;]", &input.unicode, input.category) != 2) { error = uni_fn; goto catch; };
+		if(sscanf(read, "%x;%*[^;];%3[^;]", &input.unicode,
+			input.category) != 2) { error = uni_fn; goto catch; };
+		last_mutf8 = mutf8;
 		if(!(mutf8 = mutf8_deque_new(&deque))) goto catch;
 		enum character_category cc = WTF;
 		switch(input.category[0]) {
@@ -132,11 +135,40 @@ int main(void) {
 			fprintf(stderr, "Only supports 0x110_000 code points in unicode 16.0.\n");
 			goto catch;
 		}
+
+		/* Put both entries in the trie if it's a rising or falling edge. */
+		if(state == INITIAL) {
+			state = mutf8->word ? WORD : NOT;
+		} else {
+			/* Put only rising-or-falling edges. */
+			if(!((state == WORD) ^ (mutf8->word))) continue;
+			state = mutf8->word ? WORD : NOT;
+		}
+
 		struct mutf8 *info_ptr;
-		if(!mutf8_trie_add(&trie, (char *)mutf8->string, &info_ptr)) goto catch;
-		*info_ptr = *mutf8;
+		if(!last_mutf8) goto current;
+		switch(mutf8_trie_add(&trie, (char *)last_mutf8->string, &info_ptr)) {
+		case TRIE_ERROR: goto catch;
+		case TRIE_PRESENT: break; /* Already added it. */
+		case TRIE_ABSENT: *info_ptr = *last_mutf8; break;
+		}
+current:
+		switch(mutf8_trie_add(&trie, (char *)mutf8->string, &info_ptr)) {
+		case TRIE_ERROR: goto catch;
+		case TRIE_PRESENT: fprintf(stderr, "%s has duplicate code-points.\n", uni_fn); goto catch;
+		case TRIE_ABSENT: *info_ptr = *mutf8; break;
+		}
 	}
 	if(ferror(uni_fp)) goto catch; /* May not produce a meaningful error. */
+	/* Get the trailing-edge. */
+	if(mutf8) {
+		struct mutf8 *info_ptr;
+		switch(mutf8_trie_add(&trie, (char *)mutf8->string, &info_ptr)) {
+		case TRIE_ERROR: goto catch;
+		case TRIE_PRESENT: break; /* Okay. */
+		case TRIE_ABSENT: *info_ptr = *mutf8; break;
+		}
+	}
 	mutf8_trie_graph_all(&trie, "graph.gv", 0);
 	goto finally;
 catch:
