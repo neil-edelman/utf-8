@@ -75,6 +75,55 @@ no_data:
 		"}\n");
 }
 
+#		elif defined DEQUE_NAME
+
+#			define BOX_PUBLIC_OVERRIDE
+#			include "box.h"
+
+/** Draw a graph of `deque` to `fp` in Graphviz format. */
+static void T_(graph)(const struct t_(deque) *const deque, FILE *const fp) {
+	size_t i;
+	char z[12];
+	char shape[64] = "deque";
+	struct pT_(block) *block;
+	fprintf(fp, "digraph {\n"
+		"\tgraph [rankdir=LR, truecolor=true, bgcolor=transparent,"
+		" fontname=modern];\n"
+		"\tnode [shape=none, fontname=modern];\n"
+		"\t%s [label=<\n"
+		"<table border=\"0\" cellspacing=\"0\">\n"
+		"\t<tr><td align=\"left\">"
+		"<font color=\"Gray75\">&lt;" QUOTE(DEQUE_NAME)
+		"&gt;deque: " QUOTE(DEQUE_TYPE) "</font></td></tr>\n"
+		"</table>>];\n", shape);
+	for(block = deque->head; block; block = block->previous) {
+		fprintf(fp, "\t%s -> ", shape);
+		sprintf(shape, "block%p", (void *)block);
+		fprintf(fp, "%s;\n"
+			"\tblock%p [label=<\n"
+			"<table border=\"0\" cellspacing=\"0\">\n"
+			"\t<tr><td colspan=\"2\" align=\"left\">"
+			"<font color=\"Gray75\">%s</font></td></tr>\n"
+			"\t<tr><td colspan=\"2\" align=\"left\">%lu/%lu</td></tr>\n"
+			"\t<hr/>\n", shape, (void *)block, orcify(block),
+			(unsigned long)block->size,
+			(unsigned long)block->capacity);
+		for(i = 0; i < block->size; i++) {
+			const char *const bgc = i & 1 ? " bgcolor=\"Gray95\"" : "";
+			t_(to_string)((void *)(block->data + i), &z);
+			fprintf(fp, "\t<tr>\n"
+				"\t\t<td align=\"right\"%s>"
+				"<font face=\"Times-Italic\">%lu</font></td>\n"
+				"\t\t<td align=\"left\"%s>%s</td>\n"
+				"\t</tr>\n", bgc, (unsigned long)i, bgc, z);
+		}
+		if(block->size) fprintf(fp, "\t<hr/>\n");
+		fprintf(fp, "\t<tr><td></td></tr>\n"
+			"</table>>];\n");
+	}
+	fprintf(fp, "}\n");
+}
+
 #		elif defined HEAP_NAME
 
 #			define BOX_PUBLIC_OVERRIDE
@@ -746,13 +795,8 @@ static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
 		/* 0-width joiner "&#8288;": GraphViz gets upset when tag closed
 		 immediately. */
 		fprintf(fp, "\t<tr>\n"
-			"\t\t<td align=\"left\" port=\"%u\">%s",
-			i, is_link ? "↓<font color=\"Grey75\">" : "");
-		for(const char *k = key; *k != '\0'; k++)
-			fprintf(fp, "%c%c%c%c%c%c%c%c", *k&128 ? '1':'0', *k&64 ? '1':'0',
-					*k&32 ? '1':'0', *k&16 ? '1':'0', *k&8 ? '1':'0', *k&4 ? '1':'0',
-					*k&2 ? '1':'0', *k&1 ? '1':'0');
-		fprintf(fp, "%s⊔</font></td>\n",
+			"\t\t<td align=\"left\" port=\"%u\">%s%s%s⊔</font></td>\n",
+			i, is_link ? "↓<font color=\"Grey75\">" : "", key,
 			is_link ? "" : "<font color=\"Grey75\">");
 		in_tree.br0 = 0, in_tree.br1 = tree->bsize;
 		for(b = 0; in_tree.br0 < in_tree.br1; b++) {
@@ -874,8 +918,6 @@ static void pT_(graph_tree_mem)(const struct pT_(bough) *const tree,
 	}
 }
 
-#include <ctype.h>
-
 /** Graphs `tr` on `fp`.`treebit` is the number of bits currently
  (recursive.) */
 static void pT_(graph_tree_logic)(const struct pT_(bough) *const tr,
@@ -938,22 +980,10 @@ static void pT_(graph_tree_logic)(const struct pT_(bough) *const tr,
 		union { const struct pT_(bough) *readonly; struct pT_(bough) *promise; }
 			slybox;
 		struct pT_(ref) ref;
-		size_t ch = 0;
 		slybox.readonly = tr, ref.tree = slybox.promise, ref.lf = i;
-		char buffer[20];
-		strcpy(buffer, pT_(ref_to_string)(&ref));
-		while(buffer[ch] != '\0') {
-			if(!isgraph(buffer[ch])
-				|| buffer[ch] == '>'
-				|| buffer[ch] == '<'
-				|| buffer[ch] == '&')
-				buffer[ch] = '_';
-			ch++;
-			assert(ch < sizeof buffer);
-		}
 		fprintf(fp,
 			"\ttree%pleaf%u [label = <%s<font color=\"Gray75\">⊔</font>>];\n",
-			(const void *)tr, i, buffer);
+			(const void *)tr, i, pT_(ref_to_string)(&ref));
 	}
 
 	for(i = 0; i <= tr->bsize; i++) if(trie_bmp_test(&tr->bmp, i))
