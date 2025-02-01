@@ -127,6 +127,7 @@ int main(void) {
 		if(!mutf8_trie_add(&trie, (char *)mutf8->string, &info_ptr)) goto catch;
 		*info_ptr = *mutf8;
 	}
+	printf("%s\n", private_mutf8_trie_sanitize("><arr>?"));
 	if(ferror(uni_fp)) goto catch; /* May not produce a meaningful error. */
 	mutf8_trie_graph_all(&trie, "graph.gv", 0);
 	goto finally;

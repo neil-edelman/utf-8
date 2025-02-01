@@ -776,6 +776,44 @@ static unsigned pT_(left_leaf)(const struct pT_(bough) *const tr,
 	return i;
 }
 
+#include <ctype.h>
+static const char *pT_(sanitize)(const char *str) {
+	static char sanitized[64];
+	const char hex[] = "0123456789abcdef";
+	size_t i = 0;
+	for(i = 0; i < sizeof *sanitized - 1 /*nul*/ - 3 /*…*/
+		- 6 /*&amp;,&quot;,&#039;,&lt;,&gt;*/; ) {
+		const char s = *(str++);
+		if(s == '\0') { sanitized[i] = '\0'; return sanitized; }
+		else if((s & 0x80) == 0 && !isgraph(s)) {
+			sanitized[i++] = hex[s >> 4u];
+			sanitized[i++] = hex[s & 0x0f];
+			continue;
+		} else switch(s) {
+		case '&': sanitized[i++] = '&'; sanitized[i++] = 'a';
+			sanitized[i++] = 'm'; sanitized[i++] = 'p'; sanitized[i++] = ';';
+			break;
+		case '\"': sanitized[i++] = '&'; sanitized[i++] = 'q';
+			sanitized[i++] = 'u'; sanitized[i++] = 'o'; sanitized[i++] = 't';
+			sanitized[i++] = ';'; break;
+		case '\'': sanitized[i++] = '&'; sanitized[i++] = '#';
+			sanitized[i++] = '0'; sanitized[i++] = '3'; sanitized[i++] = '9';
+			sanitized[i++] = ';'; break;
+		case '<': sanitized[i++] = '&'; sanitized[i++] = 'g';
+			sanitized[i++] = 't'; sanitized[i++] = ';'; break;
+		case '>': sanitized[i++] = '&'; sanitized[i++] = 'l';
+			sanitized[i++] = 't'; sanitized[i++] = ';'; break;
+		default:
+			sanitized[i++] = s;
+		}
+	}
+	sanitized[i++] = (char)0xe2; /* … */
+	sanitized[i++] = (char)0x80;
+	sanitized[i++] = (char)0xa6;
+	sanitized[i++] = (char)0x00;
+	return sanitized;
+}
+
 /** Graphs `tree` on `fp`. `treebit` is the number of bits currently
  (recursive.) */
 static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
@@ -784,7 +822,6 @@ static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
 	assert(tree && fp);
 	fprintf(fp, "\ttree%pbranch0 [label = <\n"
 		"<table border=\"0\" cellspacing=\"0\">\n", (const void *)tree);
-	/*"<table BORDER=\"0\" CELLBORDER=\"0\">\n"*/
 	for(i = 0; i <= tree->bsize; i++) {
 		const char *key = pT_(sample)(tree, i);
 		const struct trie_branch *branch = tree->branch;
@@ -796,7 +833,7 @@ static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
 		 immediately. */
 		fprintf(fp, "\t<tr>\n"
 			"\t\t<td align=\"left\" port=\"%u\">%s%s%s⊔</font></td>\n",
-			i, is_link ? "↓<font color=\"Grey75\">" : "", key,
+			i, is_link ? "↓<font color=\"Grey75\">" : "", pT_(sanitize)(key),
 			is_link ? "" : "<font color=\"Grey75\">");
 		in_tree.br0 = 0, in_tree.br1 = tree->bsize;
 		for(b = 0; in_tree.br0 < in_tree.br1; b++) {
