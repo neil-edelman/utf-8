@@ -74,6 +74,7 @@ int main(void) {
 			case 'l': cc = Nl; break;
 			case 'o': cc = No; break;
 			}
+			break;
 		case 'P':
 			switch(input.category[1]) {
 			case 'c': cc = Pc; break;
@@ -84,6 +85,7 @@ int main(void) {
 			case 'o': cc = Po; break;
 			case 's': cc = Ps; break;
 			}
+			break;
 		case 'S':
 			switch(input.category[1]) {
 			case 'c': cc = Sc; break;
@@ -91,12 +93,14 @@ int main(void) {
 			case 'm': cc = Sm; break;
 			case 'o': cc = So; break;
 			}
+			break;
 		case 'Z':
 			switch(input.category[1]) {
 			case 'l': cc = Zl; break;
 			case 'p': cc = Zp; break;
 			case 's': cc = Zs; break;
 			}
+			break;
 		default: break;
 		}
 		if(cc == WTF) {
