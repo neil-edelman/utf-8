@@ -3,14 +3,21 @@
 #include <errno.h>
 #include <stdbool.h>
 
+#define CATEGORIES X(WTF), X(Cc), X(Cf), X(Co), X(Cs), X(Ll), X(Lm), X(Lo), \
+	X(Lt), X(Lu), X(Mc), X(Me), X(Mn), X(Nd), X(Nl), X(No), X(Pc), X(Pd), \
+	X(Pe), X(Pf), X(Pi), X(Po), X(Ps), X(Sc), X(Sk), X(Sm), X(So), X(Zl), \
+	X(Zp), X(Zs)
+
 struct mutf8 {
-	enum character_category { WTF,
-		Cc, Cf, Co, Cs, Ll, Lm, Lo, Lt, Lu, Mc, Me, Mn, Nd, Nl, No,
-		Pc, Pd, Pe, Pf, Pi, Po, Ps, Sc, Sk, Sm, So, Zl, Zp, Zs }
-		category;
+#define X(n) n
+	enum character_category { CATEGORIES } category;
+#undef X
 	bool word;
 	char string[5];
 };
+#define X(n) #n
+static const char *category_strings[] = { CATEGORIES };
+#undef X
 static const char *mutf8_key(const struct mutf8 *const info)
 	{ return (const char *)info->string; }
 #define TRIE_NAME mutf8
@@ -34,6 +41,7 @@ int main(void) {
 	struct mutf8_trie trie = mutf8_trie();
 	struct mutf8 *mutf8 = 0, *last_mutf8;
 	enum { INITIAL, NOT, WORD } state = INITIAL;
+	struct { size_t nots, words; } count = { 0, 0 };
 	errno = 0;
 	if(!(uni_fp = fopen(uni_fn, "r"))) { error = uni_fn; goto catch; }
 	while(fgets(read, sizeof read, uni_fp)) {
@@ -150,13 +158,19 @@ int main(void) {
 		switch(mutf8_trie_add(&trie, (char *)last_mutf8->string, &info_ptr)) {
 		case TRIE_ERROR: goto catch;
 		case TRIE_PRESENT: break; /* Already added it. */
-		case TRIE_ABSENT: *info_ptr = *last_mutf8; break;
+		case TRIE_ABSENT:
+			*info_ptr = *last_mutf8;
+			if(last_mutf8->word) count.words++; else count.nots++;
+			break;
 		}
 current:
 		switch(mutf8_trie_add(&trie, (char *)mutf8->string, &info_ptr)) {
 		case TRIE_ERROR: goto catch;
 		case TRIE_PRESENT: fprintf(stderr, "%s has duplicate code-points.\n", uni_fn); goto catch;
-		case TRIE_ABSENT: *info_ptr = *mutf8; break;
+		case TRIE_ABSENT:
+			*info_ptr = *mutf8;
+			if(mutf8->word) count.words++; else count.nots++;
+			break;
 		}
 	}
 	if(ferror(uni_fp)) goto catch; /* May not produce a meaningful error. */
@@ -170,6 +184,14 @@ current:
 		}
 	}
 	mutf8_trie_graph_all(&trie, "graph.gv", 0);
+
+	char *test = "a";
+	mutf8 = mutf8_trie_get(&trie, test);
+	fprintf(stderr, "\"%s\" is %s and %s in the set of word-code-points.\n",
+		test, category_strings[mutf8->category],
+		mutf8->word ? "belongs" : "does not belong");
+	fprintf(stderr, "There are %zu words and %zu not-words.\n", count.words, count.nots);
+
 	goto finally;
 catch:
 	perror(error);
