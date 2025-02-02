@@ -39,7 +39,7 @@ int main(void) {
 	char read[256];
 	struct mutf8_deque deque = mutf8_deque();
 	struct mutf8_trie trie = mutf8_trie();
-	struct mutf8 *mutf8 = 0, *last_mutf8;
+	struct mutf8 *mutf8 = 0;
 	bool is_in_word = false;
 	struct { size_t nots, words; } count = { 0, 0 };
 	errno = 0;
@@ -51,8 +51,16 @@ int main(void) {
 		} input;
 		if(sscanf(read, "%x;%*[^;];%3[^;]", &input.unicode,
 			input.category) != 2) { error = uni_fn; goto catch; };
-		if(input.unicode >= 128) continue;
-		last_mutf8 = mutf8;
+#define ONLY_2_BYTES
+#ifdef ONLY_1_BYTE
+		if(input.unicode >= 0x80) continue;
+#elif defined ONLY_2_BYTES
+		if(input.unicode < 0x80 || input.unicode >= 0x0800) continue;
+#elif defined ONLY_3_BYTES
+		if(input.unicode < 0x8000 || input.unicode >= 0x010000) continue;
+#elif defined ONLY_4_BYTES
+		if(input.unicode < 0x010000 || input.unicode >= 0x110000) continue;
+#endif
 		if(!(mutf8 = mutf8_deque_new(&deque))) goto catch;
 		enum character_category cc = WTF;
 		switch(input.category[0]) {
@@ -156,17 +164,18 @@ int main(void) {
 		case TRIE_ABSENT:
 			*info_ptr = *mutf8;
 			if(mutf8->word) count.words++; else count.nots++;
+			printf("\"%s\", ", mutf8->string);
 			break;
 		}
 	}
 	if(ferror(uni_fp)) goto catch; /* May not produce a meaningful error. */
 	mutf8_trie_graph_all(&trie, "graph.gv", 0);
 
-	char *test = "a";
+	/*char *test = "a";
 	mutf8 = mutf8_trie_get(&trie, test);
 	fprintf(stderr, "\"%s\" is %s and %s in the set of word-code-points.\n",
 		test, category_strings[mutf8->category],
-		mutf8->word ? "belongs" : "does not belong");
+		mutf8->word ? "belongs" : "does not belong");*/
 	fprintf(stderr, "There are %zu words and %zu not-words. Total %zu.\n", count.words, count.nots, count.words + count.nots);
 
 	goto finally;

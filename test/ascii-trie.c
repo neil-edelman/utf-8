@@ -6,7 +6,64 @@
 
 #include <stdio.h>
 
+static size_t upper_1byte_bound(const char *const nondec, size_t size, const char target) {
+	size_t lo = 0, hi = size, count = hi - lo;
+	while(count) {
+		size_t step = count / 2;
+		if(/*!*/(target /*<*/ >= nondec[lo + step])) lo = step + 1, count -= step + 1;
+		else count = step;
+	}
+	return lo;
+}
+
+static bool is_1byte_word(const char *const codepoint) {
+	static const char words[] = { '0', ':', 'A', '[', 'a', '{' };
+	return upper_1byte_bound(words, sizeof words / sizeof *words, *codepoint) & 1;
+}
+
+static bool is_word2(const char *const codepoint) {
+	static const char words[][2] = {
+		"ª", "«", "µ", "¶", "º", "»", "À", "×", "Ø", "÷", "ø", "ʰ",
+		"Ͱ", "ʹ", "Ͷ", "ͺ", "ͻ", ";", "Ϳ", "΄", "Ά", "·", "Έ", "϶",
+		"Ϸ", "҂", "Ҋ", "ՙ", "ՠ", "։", "א", "׳", "ؠ",
+		"ـ", "ف", "ً", "٠", "٪", "ٮ",
+		"ٰ", "ٱ", "۔", "ە", "ۖ", "ۮ", "۽", "ۿ", "܀", "ܐ", "ܑ", "ܒ", "ܰ", "ݍ",
+		"ަ", "ޱ", "߫"
+	};
+	return false;
+}
+
+int main(void) {
+	assert(!is_1byte_word("\0"));
+	assert(!is_1byte_word(" "));
+	assert(!is_1byte_word("/"));
+	assert(is_1byte_word("0"));
+	assert(is_1byte_word("9"));
+	assert(!is_1byte_word(":"));
+	assert(!is_1byte_word("@"));
+	assert(is_1byte_word("A"));
+	assert(is_1byte_word("Z"));
+	assert(!is_1byte_word("["));
+	assert(!is_1byte_word("`"));
+	assert(is_1byte_word("a"));
+	assert(is_1byte_word("z"));
+	assert(!is_1byte_word("{"));
+	assert(!is_1byte_word("~"));
+	return EXIT_SUCCESS;
+}
+
+
+
 #if 0
+
+/*const char targets[] = { '\0', '/', '0', '9', ':', '@', 'A' };
+for(const char *t = targets, *const t_end = t + sizeof targets / sizeof *targets; t < t_end; t++) {
+	size_t i, j;
+	i = lower_bound(word_tree, sizeof word_tree / sizeof *word_tree, *t);
+	j = upper_bound(word_tree, sizeof word_tree / sizeof *word_tree, *t);
+	printf("codepoint: \"%c\", lower %zu:\"%c\", upper %zu:\"%c\".\n", *t, i, word_tree[i], j, word_tree[j]);
+}*/
+
 /* A Patricia-trie is not appropriate for range-queries because skip-bits. */
 
 /* <http://c-faq.com/misc/bitsets.html>, except reversed for msb-first. */
@@ -67,8 +124,8 @@ found:
 	return !(lf & 1);
 }
 
-#else
-
+#endif
+#if 0
 
 static size_t lower_bound(const char *const nondec, size_t size, const char target) {
 	size_t lo = 0, hi = size, count = hi - lo;
@@ -84,51 +141,4 @@ static size_t lower_bound(const char *const nondec, size_t size, const char targ
 	return lo;
 }
 
-static size_t upper_bound(const char *const nondec, size_t size, const char target) {
-	size_t lo = 0, hi = size, count = hi - lo;
-	while(count) {
-		size_t step = count / 2;
-		if(!(target < nondec[lo + step])) {
-			lo = step + 1;
-			count -= step + 1;
-		} else {
-			count = step;
-		}
-	}
-	return lo;
-}
-
-static bool is_word(const char *const codepoint) {
-	static const char word_tree[] = { '0', ':', 'A', '[', 'a', '{' };
-	/*const char targets[] = { '\0', '/', '0', '9', ':', '@', 'A' };
-	for(const char *t = targets, *const t_end = t + sizeof targets / sizeof *targets; t < t_end; t++) {
-		size_t i, j;
-		i = lower_bound(word_tree, sizeof word_tree / sizeof *word_tree, *t);
-		j = upper_bound(word_tree, sizeof word_tree / sizeof *word_tree, *t);
-		printf("codepoint: \"%c\", lower %zu:\"%c\", upper %zu:\"%c\".\n", *t, i, word_tree[i], j, word_tree[j]);
-	}*/
-	return upper_bound(word_tree, sizeof word_tree / sizeof *word_tree, *codepoint) & 1;
-}
-
-
-
 #endif
-
-int main(void) {
-	assert(!is_word("\0"));
-	assert(!is_word(" "));
-	assert(!is_word("/"));
-	assert(is_word("0"));
-	assert(is_word("9"));
-	assert(!is_word(":"));
-	assert(!is_word("@"));
-	assert(is_word("A"));
-	assert(is_word("Z"));
-	assert(!is_word("["));
-	assert(!is_word("`"));
-	assert(is_word("a"));
-	assert(is_word("z"));
-	assert(!is_word("{"));
-	assert(!is_word("~"));
-	return EXIT_SUCCESS;
-}
