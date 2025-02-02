@@ -4,6 +4,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include <stdio.h>
+
+#if 0
+/* A Patricia-trie is not appropriate for range-queries because skip-bits. */
+
 /* <http://c-faq.com/misc/bitsets.html>, except reversed for msb-first. */
 #define TRIE_MASK(n) ((1 << CHAR_BIT - 1) >> (n) % CHAR_BIT)
 #define TRIE_SLOT(n) ((n) / CHAR_BIT)
@@ -20,8 +25,6 @@ static bool is_prefix(const char *prefix, const char *word) {
 		if(*prefix != *word) return false;
 	}
 }
-
-#include <stdio.h>
 
 static bool is_word(const char *const codepoint) {
 	/* Doesn't check for '\0'; assumes well-formed. */
@@ -63,6 +66,53 @@ found:
 	printf("Leaf %d.\n", lf);
 	return !(lf & 1);
 }
+
+#else
+
+
+static size_t lower_bound(const char *const nondec, size_t size, const char target) {
+	size_t lo = 0, hi = size, count = hi - lo;
+	while(count) {
+		size_t step = count / 2;
+		if(nondec[lo + step] < target) {
+			lo += step + 1;
+			count -= step + 1;
+		} else {
+			count = step;
+		}
+	}
+	return lo;
+}
+
+static size_t upper_bound(const char *const nondec, size_t size, const char target) {
+	size_t lo = 0, hi = size, count = hi - lo;
+	while(count) {
+		size_t step = count / 2;
+		if(!(target < nondec[lo + step])) {
+			lo = step + 1;
+			count -= step + 1;
+		} else {
+			count = step;
+		}
+	}
+	return lo;
+}
+
+static bool is_word(const char *const codepoint) {
+	static const char word_tree[] = { '0', ':', 'A', '[', 'a', '{' };
+	/*const char targets[] = { '\0', '/', '0', '9', ':', '@', 'A' };
+	for(const char *t = targets, *const t_end = t + sizeof targets / sizeof *targets; t < t_end; t++) {
+		size_t i, j;
+		i = lower_bound(word_tree, sizeof word_tree / sizeof *word_tree, *t);
+		j = upper_bound(word_tree, sizeof word_tree / sizeof *word_tree, *t);
+		printf("codepoint: \"%c\", lower %zu:\"%c\", upper %zu:\"%c\".\n", *t, i, word_tree[i], j, word_tree[j]);
+	}*/
+	return upper_bound(word_tree, sizeof word_tree / sizeof *word_tree, *codepoint) & 1;
+}
+
+
+
+#endif
 
 int main(void) {
 	assert(!is_word("\0"));
