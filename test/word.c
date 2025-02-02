@@ -51,6 +51,7 @@ int main(void) {
 		} input;
 		if(sscanf(read, "%x;%*[^;];%3[^;]", &input.unicode,
 			input.category) != 2) { error = uni_fn; goto catch; };
+		if(input.unicode >= 128) continue;
 		last_mutf8 = mutf8;
 		if(!(mutf8 = mutf8_deque_new(&deque))) goto catch;
 		enum character_category cc = WTF;
@@ -149,16 +150,6 @@ int main(void) {
 		is_in_word = mutf8->word;
 
 		struct mutf8 *info_ptr;
-		if(!last_mutf8) goto current;
-		switch(mutf8_trie_add(&trie, (char *)last_mutf8->string, &info_ptr)) {
-		case TRIE_ERROR: goto catch;
-		case TRIE_PRESENT: break; /* Already added it. */
-		case TRIE_ABSENT:
-			*info_ptr = *last_mutf8;
-			if(last_mutf8->word) count.words++; else count.nots++;
-			break;
-		}
-current:
 		switch(mutf8_trie_add(&trie, (char *)mutf8->string, &info_ptr)) {
 		case TRIE_ERROR: goto catch;
 		case TRIE_PRESENT: fprintf(stderr, "%s has duplicate code-points.\n", uni_fn); goto catch;
@@ -169,15 +160,6 @@ current:
 		}
 	}
 	if(ferror(uni_fp)) goto catch; /* May not produce a meaningful error. */
-	/* Get the trailing-edge. */
-	if(mutf8) {
-		struct mutf8 *info_ptr;
-		switch(mutf8_trie_add(&trie, (char *)mutf8->string, &info_ptr)) {
-		case TRIE_ERROR: goto catch;
-		case TRIE_PRESENT: break; /* Okay. */
-		case TRIE_ABSENT: *info_ptr = *mutf8; break;
-		}
-	}
 	mutf8_trie_graph_all(&trie, "graph.gv", 0);
 
 	char *test = "a";
@@ -185,7 +167,7 @@ current:
 	fprintf(stderr, "\"%s\" is %s and %s in the set of word-code-points.\n",
 		test, category_strings[mutf8->category],
 		mutf8->word ? "belongs" : "does not belong");
-	fprintf(stderr, "There are %zu words and %zu not-words.\n", count.words, count.nots);
+	fprintf(stderr, "There are %zu words and %zu not-words. Total %zu.\n", count.words, count.nots, count.words + count.nots);
 
 	goto finally;
 catch:
