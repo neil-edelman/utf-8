@@ -40,7 +40,7 @@ int main(void) {
 	struct mutf8_deque deque = mutf8_deque();
 	struct mutf8_trie trie = mutf8_trie();
 	struct mutf8 *mutf8 = 0, *last_mutf8;
-	enum { INITIAL, NOT, WORD } state = INITIAL;
+	bool is_in_word = false;
 	struct { size_t nots, words; } count = { 0, 0 };
 	errno = 0;
 	if(!(uni_fp = fopen(uni_fn, "r"))) { error = uni_fn; goto catch; }
@@ -144,14 +144,9 @@ int main(void) {
 			goto catch;
 		}
 
-		/* Put both entries in the trie if it's a rising or falling edge. */
-		if(state == INITIAL) {
-			state = mutf8->word ? WORD : NOT;
-		} else {
-			/* Put only rising-or-falling edges. */
-			if(!((state == WORD) ^ (mutf8->word))) continue;
-			state = mutf8->word ? WORD : NOT;
-		}
+		/* Put both entries in the trie if it's a rising-or-falling-edge. */
+		if(!(is_in_word ^ mutf8->word)) continue;
+		is_in_word = mutf8->word;
 
 		struct mutf8 *info_ptr;
 		if(!last_mutf8) goto current;
