@@ -96,7 +96,7 @@ static void T_(graph)(const struct t_(deque) *const deque, FILE *const fp) {
 		"<font color=\"Gray75\">&lt;" QUOTE(DEQUE_NAME)
 		"&gt;deque: " QUOTE(DEQUE_TYPE) "</font></td></tr>\n"
 		"</table>>];\n", shape);
-	for(block = deque->head; block; block = block->previous) {
+	for(block = deque->front; block; block = block->previous) {
 		fprintf(fp, "\t%s -> ", shape);
 		sprintf(shape, "block%p", (void *)block);
 		fprintf(fp, "%s;\n"
@@ -831,21 +831,21 @@ static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
 		struct { unsigned br0, br1; } in_tree;
 		const unsigned is_link = trie_bmp_test(&tree->bmp, i);
 
-		struct mutf8 *data;
+		struct unicode *u;
 		{
 			union { const struct pT_(bough) *readonly; struct pT_(bough) *promise; }
 				slybox;
 			struct pT_(ref) ref;
 			slybox.readonly = tree, ref.tree = slybox.promise, ref.lf = i;
 			pT_(lower_entry)(&ref);
-			data = pT_(ref_to_remit)(&ref);
+			u = *pT_(ref_to_remit)(&ref);
 		}
 
 		/* 0-width joiner "&#8288;": GraphViz gets upset when tag closed
 		 immediately. */
 		fprintf(fp, "\t<tr>\n"
 			"\t\t<td align=\"left\"%s port=\"%u\">%s%s%s⊔</font></td>\n",
-			data->word ? " bgcolor=\"Red\"" : "",
+			u->is_word ? " bgcolor=\"Red\"" : "",
 			i, is_link ? "↓<font color=\"Grey75\">" : "", pT_(sanitize)(key),
 			is_link ? "" : "<font color=\"Grey75\">");
 		in_tree.br0 = 0, in_tree.br1 = tree->bsize;
