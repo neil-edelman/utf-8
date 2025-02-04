@@ -23,9 +23,9 @@ static const char *endian_strings[] = { ENDIAN };
 #define X(n) n
 enum character_category { CATEGORIES };
 #undef X
-#define X(n) #n
+/*#define X(n) #n
 static const char *category_strings[] = { CATEGORIES };
-#undef X
+#undef X*/
 
 static const unsigned tab = 4, wrap = 76;
 
