@@ -37,7 +37,7 @@ struct unicode {
 	enum character_category category;
 	uint8_t utf8_size;
 	char utf8[5];
-	union { uint8_t utf32parts[4]; uint32_t utf32; };
+	union { char utf32parts[4]; uint32_t utf32; };
 };
 
 /* Visualization trie. The Patricia tree has don't-care bits, so is not
@@ -183,21 +183,23 @@ int main(void) {
 		struct unicode *u;
 		if(!(u = unicode_deque_new_back(&storage))) goto catch;
 		u->unicode = input.unicode;
+		u->category = cc;
 		if(input.unicode < 0x80) {
 			u->utf8_size = 1;
 			u->utf8[0] = (char)input.unicode;
-			u->utf8[1] = '\0';
+			u->utf8[1] = '\0', u->utf8[2] = '\0', u->utf8[3] = '\0',
+				u->utf8[4] = '\0';
 		} else if(input.unicode < 0x0800) {
 			u->utf8_size = 2;
 			u->utf8[0] = 0xc0 | (char) (input.unicode >>  6u);
 			u->utf8[1] = 0x80 | (char)( input.unicode         & 0x3f);
-			u->utf8[2] = '\0';
+			u->utf8[2] = '\0', u->utf8[3] = '\0', u->utf8[4] = '\0';
 		} else if(input.unicode < 0x010000) {
 			u->utf8_size = 3;
 			u->utf8[0] = 0xe0 | (char)(input.unicode  >> 12u);
 			u->utf8[1] = 0x80 | (char)((input.unicode >>  6u) & 0x3f);
 			u->utf8[2] = 0x80 | (char)( input.unicode         & 0x3f);
-			u->utf8[3] = '\0';
+			u->utf8[3] = '\0', u->utf8[4] = '\0';
 		} else if(input.unicode < 0x110000) {
 			u->utf8_size = 4;
 			u->utf8[0] = 0xf0 | (char) (input.unicode >> 18u);
@@ -211,7 +213,12 @@ int main(void) {
 			errmsg = unicode_fn;
 			goto catch;
 		}
-		u->category = cc;
+		if(endian == little)
+			u->utf32parts[0] = u->utf8[3], u->utf32parts[1] = u->utf8[2],
+			u->utf32parts[2] = u->utf8[1], u->utf32parts[3] = u->utf8[0];
+		else
+			u->utf32parts[0] = u->utf8[0], u->utf32parts[1] = u->utf8[1],
+			u->utf32parts[2] = u->utf8[2], u->utf32parts[3] = u->utf8[3];
 	}
 	fclose(unicode_fp), unicode_fp = 0;
 	unicode_deque_graph_fn(&storage, "storage.gv");
