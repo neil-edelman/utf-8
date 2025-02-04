@@ -1,8 +1,9 @@
+/* @license MIT @std C11 */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <assert.h>
-//#include <stdint.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -28,15 +29,15 @@ static const char *category_strings[] = { CATEGORIES };
 
 static const unsigned tab = 4, wrap = 76;
 
-/** Note. Utf-8 disallows overlong encodings. Should be "modified utf-8" which
- uses one overlong encoding of U+0000 as "0xC0, 0x80" to solve it conflicting
- with '\0' as nul-termination. We just won't care about that. */
+/** Note. Utf-8 disallows overlong encodings so it conflicts with '\0' as
+ nul-termination. Should be "modified utf-8" which uses one overlong encoding
+ of U+0000 as "0xC0, 0x80". Might be important in some instances? */
 struct unicode {
 	uint32_t unicode;
 	enum character_category category;
 	uint8_t utf8_size;
 	char utf8[5];
-	/*uint32_t utf32;*/
+	union { uint8_t utf32parts[4]; uint32_t utf32; };
 };
 
 /* Visualization trie. The Patricia tree has don't-care bits, so is not
@@ -57,7 +58,7 @@ static void unicode_to_string(const struct unicode *const u, char (*const a)[12]
 #include "../src/deque.h"
 
 static void print_byte(const struct unicode_trie *const utf8,
-	const unsigned bytes, const char *const name) {
+	const char *const name) {
 	bool first = true;
 	unsigned column = tab;
 	size_t entries = 0;
@@ -90,11 +91,11 @@ int main(void) {
 
 	/* Detect the endianness. */
 	const union { uint32_t a; uint8_t b[4]; } test = { .a = 1 };
-	fprintf(stderr, "(%"PRIu32") == (%"PRIu8",%"PRIu8",%"PRIu8",%"PRIu8")\n",
-		test.a, test.b[0], test.b[1], test.b[2], test.b[3]);
 	assert((test.b[0] == 1) ^ (test.b[3] == 1) && !test.b[1] && !test.b[2]);
 	endian = test.b[0] ? little : big;
-	fprintf(stderr, "Detected %s-endian.\n", endian_strings[endian]);
+	fprintf(stderr, "(%"PRIu32") == (%"PRIu8",%"PRIu8",%"PRIu8",%"PRIu8"). "
+		"Detected %s-endian.\n", test.a,
+		test.b[0], test.b[1], test.b[2], test.b[3], endian_strings[endian]);
 
 	/* Load the unicode data.
 	 <https://www.unicode.org/Public/UNIDATA/UnicodeData.txt> */
@@ -178,7 +179,7 @@ int main(void) {
 			goto catch;
 		}
 
-		/* Load the entire table. */
+		/* Load the entire table into memory because we are lazy. */
 		struct unicode *u;
 		if(!(u = unicode_deque_new_back(&storage))) goto catch;
 		u->unicode = input.unicode;
@@ -247,10 +248,10 @@ int main(void) {
 	}
 
 	/* Output the programme. */
-	print_byte(&bytes[0].trie, 1, "static const uint8_t uniedge1");
-	print_byte(&bytes[1].trie, 2, "static const uint16_t uniedge2");
-	print_byte(&bytes[2].trie, 3, "static const uint32_t uniedge3");
-	print_byte(&bytes[3].trie, 4, "static const uint32_t uniedge4");
+	print_byte(&bytes[0].trie, "static const uint8_t uniedge1");
+	print_byte(&bytes[1].trie, "static const uint16_t uniedge2");
+	print_byte(&bytes[2].trie, "static const uint32_t uniedge3");
+	print_byte(&bytes[3].trie, "static const uint32_t uniedge4");
 
 	goto finally;
 catch:
