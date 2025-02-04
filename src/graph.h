@@ -844,8 +844,7 @@ static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
 		/* 0-width joiner "&#8288;": GraphViz gets upset when tag closed
 		 immediately. */
 		fprintf(fp, "\t<tr>\n"
-			"\t\t<td align=\"left\"%s port=\"%u\">%s%s%s⊔</font></td>\n",
-			u->is_word ? " bgcolor=\"Red\"" : "",
+			"\t\t<td align=\"left\" port=\"%u\">%s%s%s⊔</font></td>\n",
 			i, is_link ? "↓<font color=\"Grey75\">" : "", pT_(sanitize)(key),
 			is_link ? "" : "<font color=\"Grey75\">");
 		in_tree.br0 = 0, in_tree.br1 = tree->bsize;
