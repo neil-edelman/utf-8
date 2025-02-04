@@ -37,12 +37,12 @@ struct unicode {
 	enum character_category category;
 	uint8_t utf8_size;
 	char utf8[5];
-	union { char utf32parts[4]; uint32_t utf32; };
+	union { char utf32byte[4]; uint32_t utf32; };
 };
 
 /* Visualization trie. The Patricia tree has don't-care bits, so is not
  applicable to inverse-range-queries. (Nice try, tough.) */
-static const char *unicode_key(const struct unicode *const*const u)
+static const char *unicode_key(/*const<-it is not, technically :( */ struct unicode *const*const u)
 	{ return (*u)->utf8; }
 #define TRIE_NAME unicode
 #define TRIE_ENTRY struct unicode *
@@ -67,18 +67,13 @@ static void print_byte(const struct unicode_trie *const utf8,
 	for(struct unicode_trie_cursor cur = unicode_trie_begin(utf8);
 		unicode_trie_exists(&cur); unicode_trie_next(&cur)) {
 		const struct unicode *const u = *unicode_trie_entry(&cur);
-		uint32_t utf8code = 0;
 		entries++;
-		for(unsigned byte = 0; byte < u->utf8_size; byte++)
-			if(endian == little)
-				utf8code |= (uint32_t)(uint8_t)u->utf8[byte] << (byte * 8u);
-			else
-				utf8code = (utf8code << 8u) | (uint8_t)u->utf8[byte];
-		int r = snprintf(0, 0, "%s0x%"PRIx32"", first ? "" : ", ", utf8code);
+		int r = snprintf(0, 0, "%s0x%"PRIx32"", first ? "" : ", ", u->utf32);
 		if(r < 0) perror("output"), exit(EXIT_FAILURE);
-		if((column += (unsigned)r) > wrap - 1 /*","*/)
-			printf(",\n\t"), column = tab, first = true; /* Soft-return. */
-		printf("%s0x%"PRIx32"", first ? "" : ", ", utf8code);
+		if((column += (unsigned)r) > wrap - 1 /*","*/) /* Soft-return. */
+			printf(",\n\t"), column = tab + (unsigned)r - 2 /*", "*/,
+			first = true;
+		printf("%s0x%"PRIx32"", first ? "" : ", ", u->utf32);
 		first = false;
 	}
 	printf("\n"
@@ -213,12 +208,12 @@ int main(void) {
 			errmsg = unicode_fn;
 			goto catch;
 		}
-		if(endian == little)
-			u->utf32parts[0] = u->utf8[3], u->utf32parts[1] = u->utf8[2],
-			u->utf32parts[2] = u->utf8[1], u->utf32parts[3] = u->utf8[0];
+		if(endian == big)
+			u->utf32byte[0] = u->utf8[3], u->utf32byte[1] = u->utf8[2],
+			u->utf32byte[2] = u->utf8[1], u->utf32byte[3] = u->utf8[0];
 		else
-			u->utf32parts[0] = u->utf8[0], u->utf32parts[1] = u->utf8[1],
-			u->utf32parts[2] = u->utf8[2], u->utf32parts[3] = u->utf8[3];
+			u->utf32byte[0] = u->utf8[0], u->utf32byte[1] = u->utf8[1],
+			u->utf32byte[2] = u->utf8[2], u->utf32byte[3] = u->utf8[3];
 	}
 	fclose(unicode_fp), unicode_fp = 0;
 	unicode_deque_graph_fn(&storage, "storage.gv");
@@ -255,10 +250,10 @@ int main(void) {
 	}
 
 	/* Output the programme. */
-	print_byte(&bytes[0].trie, "static const uint8_t uniedge1");
-	print_byte(&bytes[1].trie, "static const uint16_t uniedge2");
-	print_byte(&bytes[2].trie, "static const uint32_t uniedge3");
-	print_byte(&bytes[3].trie, "static const uint32_t uniedge4");
+	print_byte(&bytes[0].trie, "static const uint32_t utf32_word_edges");
+	print_byte(&bytes[1].trie, "static const uint32_t …");
+	print_byte(&bytes[2].trie, "static const uint32_t …");
+	print_byte(&bytes[3].trie, "static const uint32_t …");
 
 	goto finally;
 catch:
