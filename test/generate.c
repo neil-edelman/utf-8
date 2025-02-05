@@ -1,4 +1,4 @@
-/* @license MIT @std C11 */
+/** @license MIT @std C11 */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,27 +57,20 @@ static void unicode_to_string(const struct unicode *const u, char (*const a)[12]
 #define DEQUE_TO_STRING
 #include "../src/deque.h"
 
-static void print_byte(const struct unicode_trie *const utf8,
-	const char *const name) {
+static void print_byte(const struct unicode_trie *const unicode) {
 	bool first = true;
 	unsigned column = tab;
-	size_t entries = 0;
-	printf("%s = {\n"
-		"\t", name);
-	for(struct unicode_trie_cursor cur = unicode_trie_begin(utf8);
+	for(struct unicode_trie_cursor cur = unicode_trie_begin(unicode);
 		unicode_trie_exists(&cur); unicode_trie_next(&cur)) {
 		const struct unicode *const u = *unicode_trie_entry(&cur);
-		entries++;
-		int r = snprintf(0, 0, "%s0x%"PRIx32"", first ? "" : ", ", u->utf32);
+		int r = snprintf(0, 0, "%s0x%"PRIx32"", first ? "\t" : ", ", u->utf32);
 		if(r < 0) perror("output"), exit(EXIT_FAILURE);
 		if((column += (unsigned)r) > wrap - 1 /*","*/) /* Soft-return. */
-			printf(",\n\t"), column = tab + (unsigned)r - 2 /*", "*/,
+			printf(",\n"), column = tab + (unsigned)r - 2 /*", "*/,
 			first = true;
-		printf("%s0x%"PRIx32"", first ? "" : ", ", u->utf32);
+		printf("%s0x%"PRIx32"", first ? "\t" : ", ", u->utf32);
 		first = false;
 	}
-	printf("\n"
-		"}; /* %zu entries. */\n", entries);
 }
 
 int main(void) {
@@ -222,7 +215,8 @@ int main(void) {
 	struct {
 		struct unicode_trie trie;
 		bool property;
-	} bytes[4] = {0};
+		uint32_t size;
+	} bytes[4 /* The number of bytes. */] = {0};
 	for(struct unicode_deque_cursor cur = unicode_deque_begin(&storage);
 		unicode_deque_exists(&cur); unicode_deque_next(&cur)) {
 		/*const?*/ struct unicode **put_data_here;
@@ -238,7 +232,10 @@ int main(void) {
 			fprintf(stderr, "Has duplicate code-points.\n");
 			errno = EDOM;
 		case TRIE_ERROR: errmsg = "output"; goto catch;
-		case TRIE_ABSENT: *put_data_here = u; break;
+		case TRIE_ABSENT:
+			*put_data_here = u;
+			bytes[u->utf8_size - 1].size++;
+			break;
 		}
 	}
 
@@ -250,10 +247,28 @@ int main(void) {
 	}
 
 	/* Output the programme. */
-	print_byte(&bytes[0].trie, "static const uint32_t utf32_word_edges");
-	print_byte(&bytes[1].trie, "static const uint32_t …");
-	print_byte(&bytes[2].trie, "static const uint32_t …");
-	print_byte(&bytes[3].trie, "static const uint32_t …");
+	printf("static const uint32_t utf32_word_edges[] = {\n"
+		"\t/* %"PRIu32" code-points. */\n", bytes[0].size);
+	print_byte(&bytes[0].trie);
+	printf(",\n"
+		"\t/* %"PRIu32" code-points. */\n", bytes[1].size);
+	print_byte(&bytes[1].trie);
+	printf(",\n"
+		"\t/* %"PRIu32" code-points. */\n", bytes[2].size);
+	print_byte(&bytes[2].trie);
+	printf(",\n"
+		"\t/* %"PRIu32" code-points. */\n", bytes[3].size);
+	print_byte(&bytes[3].trie);
+	printf("\n"
+		"};\n");
+
+	uint32_t running = 0;
+	bool first = true;
+	printf("static const uint32_t utf32_word_byte_end[] = { ");
+	for(unsigned i = 0; i < 4; i++)
+		printf("%s%"PRIu32"", first ? "" : ", ", running += bytes[i].size),
+		first = false;
+	printf(" };\n");
 
 	goto finally;
 catch:
