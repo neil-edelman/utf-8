@@ -157,63 +157,36 @@ static bool is_word(const char *const string_in_utf8) {
 			internal.u32);
 	} else if((byte & 0xe0) == 0xc0) { /* 2 bytes? */
 		internal.u8[1] = byte;
+		byte = 0;
 		internal.u8[0] = utf8[1]; /*??*/
 		ub = upper_bound(utf32_word_edges, utf32_word_byte_end[0], utf32_word_byte_end[1], internal.u32);
 	} else {
-		assert(0);
+		assert(!42);
 	}
 	/*fprintf(stderr, "(upper(\"0x%"PRIx32"\") = index %zu:\"0x%"PRIx32"\")\n",
 		internal.u32, ub, utf32_word_edges[ub]);*/
 	return ub & 1;
 }
 
-/*static bool is_word(const char *const codepoint) {
-	size_t ub = upper_bound(utf32_word_edges, 0, utf32_word_byte_end[0],
-		(uint32_t)(uint8_t)*codepoint);
-	fprintf(stderr, "(upper: 0x%zx:\"0x%"PRIx32"\")\n",
-		ub, utf32_word_edges[ub]);
-	return ub & 1;
-}*/
-
 #include "unicode.h"
 #include <stdbool.h>
 
 int main(void) {
 	int retval = EXIT_FAILURE;
-	/*struct test {
-		const char *codepoint;
-		bool is_word;
-	} test[] = {
-		{ "`", false },
-		{ "a", true },
-		{ "z", true },
-		{ "{", false },
-		{ "_", false },
-		{ "\0x7f", false },
-		{ "©", false },
-		{ "ª", true },
-		{ "à", true }
-	};
-	for(struct test *i = test, *const i_end = test + sizeof test / sizeof *test;
-		i < i_end; i++) {
-		bool is = is_word(i->codepoint);
-		printf("Testing whether \"%s\" is%s a code point in a word: it is%s.\n",
-			i->codepoint, i->is_word ? "" : " not", is ? "" : " not");
-		assert(i->is_word == is);
-	}*/
 	struct unicode_deque info = unicode_load();
 	if(!info.back) goto catch;
 
 	for(struct unicode_deque_cursor i = unicode_deque_begin(&info);
 		unicode_deque_exists(&i); unicode_deque_next(&i)) {
 		const struct unicode *const u = unicode_deque_entry(&i);
-		bool is_2 = u->category == Ll || u->category == Lu || u->category == Lt
+		bool is_from_catalog
+			= u->category == Ll || u->category == Lu || u->category == Lt
 			|| u->category == Lo || u->category == Nd,
-			is_utf8 = is_word(u->utf8);
+			is_from_word = is_word(u->utf8);
 		printf("U+%"PRIx32":0x%"PRIx32": %s (%s).\n",
-			u->unicode, u->internal.uint, is_utf8 ? "yes" : "no",
-			is_2 ? "yes" : "no");
-		assert(is_utf8 == is_2);
+			u->unicode, u->internal.uint, is_from_word ? "yes" : "no",
+			is_from_catalog ? "yes" : "no");
+		assert(is_from_word == is_from_catalog);
 	}
 
 	retval = EXIT_SUCCESS;

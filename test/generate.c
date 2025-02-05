@@ -60,6 +60,12 @@ int main(void) {
 		/*const?*/ struct unicode *const u = unicode_deque_entry(&cur);
 		bool is_word = u->category == Ll || u->category == Lu
 			|| u->category == Lt || u->category == Lo || u->category == Nd;
+		/* fixme: To be in Unicode Level 1,
+		 <https://unicode.org/reports/tr18/#RL1.4>
+		 "Alphabetic values from the Unicode character" (Lm? we definitely
+		 want Lm? Swift has Lm, experimentally.)
+		 "U+200C ZERO WIDTH NON-JOINER and U+200D ZERO WIDTH JOINER"
+		 */
 		/* Put it in trie if it's a rising-or-falling-edge. */
 		if(!(bytes[u->utf8_size].property ^ is_word)) continue;
 		bytes[u->utf8_size].property = is_word;
