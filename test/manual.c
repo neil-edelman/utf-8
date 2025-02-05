@@ -149,35 +149,36 @@ static size_t upper_bound(
 static bool is_word(const char *const string_in_utf8) {
 	const uint8_t *const utf8 = (const uint8_t *const)string_in_utf8;
 	union { uint32_t u32; uint8_t u8[4]; } internal = { .u32 = 0 };
-	size_t ub;
+	size_t edge;
 	uint8_t byte = utf8[0];
 	if(byte < 0x80) { /* 1 byte? */
 		internal.u8[0] = byte;
-		ub = upper_bound(utf32_word_edges, 0, utf32_word_byte_end[0],
+		edge = upper_bound(utf32_word_edges, 0, utf32_word_byte_end[0],
 			internal.u32);
-	} else if((byte & 0xe0) == 0xc0) { /* 2 bytes? */
+	} else if((byte & 0xe0) == 0xc0) { /* 2 bytes continued? */
 		internal.u8[1] = byte;
 		byte = utf8[1];
-		if((byte & 0xc0) != 0x80) return assert(0), 0;
+		if((byte & 0xc0) != 0x80) return assert(0), false;
 		internal.u8[0] = byte;
-		ub = upper_bound(utf32_word_edges, utf32_word_byte_end[0], utf32_word_byte_end[1], internal.u32);
-	} else if((byte & 0xf0) == 0xe0) {
-		printf("three: ");
+		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[0], utf32_word_byte_end[1], internal.u32);
+	} else if((byte & 0xf0) == 0xe0) { /* 3 bytes continued? */
 		internal.u8[2] = byte;
 		byte = utf8[1];
-		if((byte & 0xc0) != 0x80) return assert(0), 0;
+		if((byte & 0xc0) != 0x80) return assert(0), false;
 		internal.u8[1] = byte;
 		byte = utf8[2];
-		if((byte & 0xc0) != 0x80) return assert(0), 0;
+		if((byte & 0xc0) != 0x80) return assert(0), false;
 		internal.u8[0] = byte;
-		ub = upper_bound(utf32_word_edges, utf32_word_byte_end[1], utf32_word_byte_end[2], internal.u32);
-	} else {
+		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[1], utf32_word_byte_end[2], internal.u32);
+	} else if((byte & 0xf8) == 0xf0) { /* 4 bytes continued? */
 		printf("0x%x\n", byte);
 		assert(!42);
+	} else { /* Not normalized to utf-8. */
+		return assert(0), false;
 	}
 	/*fprintf(stderr, "(upper(\"0x%"PRIx32"\") = index %zu:\"0x%"PRIx32"\")\n",
 		internal.u32, ub, utf32_word_edges[ub]);*/
-	return ub & 1;
+	return edge & 1;
 }
 
 #include "unicode.h"
