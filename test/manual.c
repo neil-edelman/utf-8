@@ -141,7 +141,7 @@ static size_t upper_bound(
 		if(table[mid] <= key) low = mid + 1;
 		else high = mid;
 	}
-	//fprintf(stderr, " (ub(0x%"PRIx32")=#%zu 0x%"PRIx32")\n", key, low, table[low]);
+	fprintf(stderr, " (ub(0x%"PRIx32")=#%zu 0x%"PRIx32")\n", key, low, table[low]);
 	return low;
 }
 
@@ -157,10 +157,22 @@ static bool is_word(const char *const string_in_utf8) {
 			internal.u32);
 	} else if((byte & 0xe0) == 0xc0) { /* 2 bytes? */
 		internal.u8[1] = byte;
-		byte = 0;
-		internal.u8[0] = utf8[1]; /*??*/
+		byte = utf8[1];
+		if((byte & 0xc0) != 0x80) return assert(0), 0;
+		internal.u8[0] = byte;
 		ub = upper_bound(utf32_word_edges, utf32_word_byte_end[0], utf32_word_byte_end[1], internal.u32);
+	} else if((byte & 0xf0) == 0xe0) {
+		printf("three: ");
+		internal.u8[2] = byte;
+		byte = utf8[1];
+		if((byte & 0xc0) != 0x80) return assert(0), 0;
+		internal.u8[1] = byte;
+		byte = utf8[2];
+		if((byte & 0xc0) != 0x80) return assert(0), 0;
+		internal.u8[0] = byte;
+		ub = upper_bound(utf32_word_edges, utf32_word_byte_end[1], utf32_word_byte_end[2], internal.u32);
 	} else {
+		printf("0x%x\n", byte);
 		assert(!42);
 	}
 	/*fprintf(stderr, "(upper(\"0x%"PRIx32"\") = index %zu:\"0x%"PRIx32"\")\n",
