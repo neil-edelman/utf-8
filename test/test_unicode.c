@@ -6,9 +6,10 @@
 int main(void) {
 	int ret_val = EXIT_FAILURE;
 	errno = 0;
-	struct unicode_deque storage = unicode_load();
-	if(!storage.back) goto catch;
-	for(struct unicode_deque_cursor cur = unicode_deque_begin(&storage);
+	struct unicode_deque info = unicode_load();
+	if(!info.back) goto catch;
+	unicode_deque_graph_fn(&info, "unicode.gv");
+	for(struct unicode_deque_cursor cur = unicode_deque_begin(&info);
 		unicode_deque_exists(&cur); unicode_deque_next(&cur)) {
 		const struct unicode *const x = unicode_deque_entry(&cur);
 		printf("Unicode: 0x%"PRIu32".\n", x->unicode);
@@ -18,6 +19,6 @@ int main(void) {
 catch:
 	perror("main");
 finally:
-	unicode_deque_(&storage);
+	unicode_deque_(&info);
 	return ret_val;
 }

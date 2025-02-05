@@ -1,20 +1,12 @@
 #define DELAY
 #include "unicode.h"
 
+#include <stdio.h>
 #include <stdbool.h>
 
 #define X(n) #n
 const char *category_strings[] = { CATEGORIES };
 #undef X
-
-/* Visualization trie. The Patricia tree has don't-care bits, so is not
- applicable to inverse-range-queries. (Nice try, tough.) */
-static const char *unicode_key(/*const<-it is not, technically :( */ struct unicode *const*const u)
-	{ return (*u)->utf8; }
-#define TRIE_NAME unicode
-#define TRIE_ENTRY struct unicode *
-#define TRIE_TO_STRING
-#include "../src/trie.h"
 
 static void unicode_to_string(const struct unicode *const u, char (*const a)[12])
 	{ sprintf(*a, "U+%x", u->unicode % 0x1000000); }
@@ -23,8 +15,9 @@ static void unicode_to_string(const struct unicode *const u, char (*const a)[12]
 #include "unicode.h"
 
 struct unicode_deque unicode_load(void) {
-	struct unicode_deque storage = unicode_deque();
 	const char *errmsg = 0;
+	FILE *unicode_fp = 0;
+	struct unicode_deque storage = unicode_deque();
 
 	/* Detect the endianness. */
 	const union { uint32_t i; uint8_t c[4]; } test = { .i = 1 };
@@ -33,7 +26,6 @@ struct unicode_deque unicode_load(void) {
 	/* Load the unicode data.
 	 <https://www.unicode.org/Public/UNIDATA/UnicodeData.txt> */
 	const char *const unicode_fn = "UnicodeData.txt";
-	FILE *unicode_fp = 0;
 	if(!(unicode_fp = fopen(unicode_fn, "r")))
 		{ errmsg = unicode_fn; goto catch; }
 	fprintf(stderr, "Opened \"%s\" for reading.\n", unicode_fn);
@@ -150,12 +142,11 @@ struct unicode_deque unicode_load(void) {
 		else
 			u->internal.uint = v.uint;
 	}
-	fclose(unicode_fp), unicode_fp = 0;
-	unicode_deque_graph_fn(&storage, "storage.gv");
 	goto finally;
 catch:
 	perror(errmsg);
 	unicode_deque_(&storage);
 finally:
+	if(unicode_fp) fclose(unicode_fp), unicode_fp = 0;
 	return storage;
 }
