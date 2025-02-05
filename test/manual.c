@@ -172,8 +172,18 @@ static bool is_word(const char *const string_in_utf8) {
 		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[1], utf32_word_byte_end[2], internal.u32);
 	} else if((byte & 0xf8) == 0xf0) { /* 4 bytes continued? */
 		printf("0x%x\n", byte);
-		assert(!42);
-	} else { /* Not normalized to utf-8. */
+		internal.u8[3] = byte;
+		byte = utf8[1];
+		if((byte & 0xc0) != 0x80) return assert(0), false;
+		internal.u8[2] = byte;
+		byte = utf8[2];
+		if((byte & 0xc0) != 0x80) return assert(0), false;
+		internal.u8[1] = byte;
+		byte = utf8[3];
+		if((byte & 0xc0) != 0x80) return assert(0), false;
+		internal.u8[0] = byte;
+		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[2], utf32_word_byte_end[3], internal.u32);
+	} else { /* Not normalized utf-8 (16.0.0 #44) character. */
 		return assert(0), false;
 	}
 	/*fprintf(stderr, "(upper(\"0x%"PRIx32"\") = index %zu:\"0x%"PRIx32"\")\n",
