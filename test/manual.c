@@ -141,7 +141,7 @@ static size_t upper_bound(
 		if(table[mid] <= key) low = mid + 1;
 		else high = mid;
 	}
-	fprintf(stderr, " (ub(0x%"PRIx32")=#%zu 0x%"PRIx32")\n", key, low, table[low]);
+	//fprintf(stderr, " (ub(0x%"PRIx32")=#%zu 0x%"PRIx32")\n", key, low, table[low]);
 	return low;
 }
 
@@ -171,7 +171,6 @@ static bool is_word(const char *const string_in_utf8) {
 		internal.u8[0] = byte;
 		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[1], utf32_word_byte_end[2], internal.u32);
 	} else if((byte & 0xf8) == 0xf0) { /* 4 bytes continued? */
-		printf("0x%x\n", byte);
 		internal.u8[3] = byte;
 		byte = utf8[1];
 		if((byte & 0xc0) != 0x80) return assert(0), false;
