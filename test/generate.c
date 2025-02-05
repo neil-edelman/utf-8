@@ -37,7 +37,7 @@ struct unicode {
 	enum character_category category;
 	uint8_t utf8_size;
 	char utf8[5];
-	union { char utf32byte[4]; uint32_t utf32; };
+	union internal { char byte[4]; uint32_t uint; } internal;
 };
 
 /* Visualization trie. The Patricia tree has don't-care bits, so is not
@@ -63,12 +63,13 @@ static void print_byte(const struct unicode_trie *const unicode) {
 	for(struct unicode_trie_cursor cur = unicode_trie_begin(unicode);
 		unicode_trie_exists(&cur); unicode_trie_next(&cur)) {
 		const struct unicode *const u = *unicode_trie_entry(&cur);
-		int r = snprintf(0, 0, "%s0x%"PRIx32"", first ? "\t" : ", ", u->utf32);
+		int r = snprintf(0, 0, "%s0x%"PRIx32"", first ? "\t" : ", ",
+			u->internal.uint);
 		if(r < 0) perror("output"), exit(EXIT_FAILURE);
 		if((column += (unsigned)r) > wrap - 1 /*","*/) /* Soft-return. */
 			printf(",\n"), column = tab + (unsigned)r - 2 /*", "*/,
 			first = true;
-		printf("%s0x%"PRIx32"", first ? "\t" : ", ", u->utf32);
+		printf("%s0x%"PRIx32"", first ? "\t" : ", ", u->internal.uint);
 		first = false;
 	}
 }
@@ -161,7 +162,8 @@ int main(void) {
 		default: break;
 		}
 		if(cc == WTF) {
-			fprintf(stderr, "Character %u unknown category %s.\n", input.unicode, input.category);
+			fprintf(stderr, "Character %u unknown category %s.\n",
+				input.unicode, input.category);
 			errno = ERANGE;
 			errmsg = unicode_fn;
 			goto catch;
@@ -172,41 +174,38 @@ int main(void) {
 		if(!(u = unicode_deque_new_back(&storage))) goto catch;
 		u->unicode = input.unicode;
 		u->category = cc;
+		u->utf8[0] = '\0', u->utf8[1] = '\0', u->utf8[2] = '\0',
+			u->utf8[3] = '\0', u->utf8[4] = '\0';
+		union internal v = { .uint = 0 };
 		if(input.unicode < 0x80) {
 			u->utf8_size = 1;
-			u->utf8[0] = (char)input.unicode;
-			u->utf8[1] = '\0', u->utf8[2] = '\0', u->utf8[3] = '\0',
-				u->utf8[4] = '\0';
+			v.byte[3] = u->utf8[0] = (char)input.unicode;
 		} else if(input.unicode < 0x0800) {
 			u->utf8_size = 2;
-			u->utf8[0] = 0xc0 | (char) (input.unicode >>  6u);
-			u->utf8[1] = 0x80 | (char)( input.unicode         & 0x3f);
-			u->utf8[2] = '\0', u->utf8[3] = '\0', u->utf8[4] = '\0';
+			v.byte[2] = u->utf8[0] = 0xc0 | (char) (input.unicode >>  6u);
+			v.byte[3] = u->utf8[1] = 0x80 | (char)( input.unicode         & 0x3f);
 		} else if(input.unicode < 0x010000) {
 			u->utf8_size = 3;
-			u->utf8[0] = 0xe0 | (char)(input.unicode  >> 12u);
-			u->utf8[1] = 0x80 | (char)((input.unicode >>  6u) & 0x3f);
-			u->utf8[2] = 0x80 | (char)( input.unicode         & 0x3f);
-			u->utf8[3] = '\0', u->utf8[4] = '\0';
+			v.byte[1] = u->utf8[0] = 0xe0 | (char)(input.unicode  >> 12u);
+			v.byte[2] = u->utf8[1] = 0x80 | (char)((input.unicode >>  6u) & 0x3f);
+			v.byte[3] = u->utf8[2] = 0x80 | (char)( input.unicode         & 0x3f);
 		} else if(input.unicode < 0x110000) {
 			u->utf8_size = 4;
-			u->utf8[0] = 0xf0 | (char) (input.unicode >> 18u);
-			u->utf8[1] = 0x80 | (char)((input.unicode >> 12u) & 0x3f);
-			u->utf8[2] = 0x80 | (char)((input.unicode >>  6u) & 0x3f);
-			u->utf8[3] = 0x80 | (char)( input.unicode         & 0x3f);
-			u->utf8[4] = '\0';
+			v.byte[0] = u->utf8[0] = 0xf0 | (char) (input.unicode >> 18u);
+			v.byte[1] = u->utf8[1] = 0x80 | (char)((input.unicode >> 12u) & 0x3f);
+			v.byte[2] = u->utf8[2] = 0x80 | (char)((input.unicode >>  6u) & 0x3f);
+			v.byte[3] = u->utf8[3] = 0x80 | (char)( input.unicode         & 0x3f);
 		} else {
 			fprintf(stderr, "Only supports 0x110_000 code points in unicode 16.0.0 #44.\n");
 			errno = ERANGE;
 			errmsg = unicode_fn;
 			goto catch;
 		}
-		if(endian == big)
-			u->utf32byte[0] = u->utf8[3], u->utf32byte[1] = u->utf8[2],
-			u->utf32byte[2] = u->utf8[1], u->utf32byte[3] = u->utf8[0];
+		if(endian == little)
+			u->internal.byte[0] = v.byte[3], u->internal.byte[1] = v.byte[2],
+			u->internal.byte[2] = v.byte[1], u->internal.byte[3] = v.byte[0];
 		else
-			u->utf32byte[0] = u->utf8[0], u->utf32byte[1] = u->utf8[1],
-			u->utf32byte[2] = u->utf8[2], u->utf32byte[3] = u->utf8[3];
+			u->internal.uint = v.uint;
 	}
 	fclose(unicode_fp), unicode_fp = 0;
 	unicode_deque_graph_fn(&storage, "storage.gv");
