@@ -140,6 +140,7 @@ static size_t upper_bound(
 		if(table[mid] <= key) low = mid + 1;
 		else high = mid;
 	}
+	fprintf(stderr, "(ub(0x%"PRIx32")=0x%"PRIx32")", key, table[low]);
 	return low;
 }
 
@@ -160,8 +161,8 @@ static bool is_word(const char *const string_in_utf8) {
 	} else {
 		assert(0);
 	}
-	fprintf(stderr, "(upper(\"0x%"PRIx32"\") = index %zu:\"0x%"PRIx32"\")\n",
-		internal.u32, ub, utf32_word_edges[ub]);
+	/*fprintf(stderr, "(upper(\"0x%"PRIx32"\") = index %zu:\"0x%"PRIx32"\")\n",
+		internal.u32, ub, utf32_word_edges[ub]);*/
 	return ub & 1;
 }
 
@@ -173,7 +174,11 @@ static bool is_word(const char *const string_in_utf8) {
 	return ub & 1;
 }*/
 
+#include "unicode.h"
+#include <stdbool.h>
+
 int main(void) {
+	int retval = EXIT_FAILURE;
 	/*struct test {
 		const char *codepoint;
 		bool is_word;
@@ -195,5 +200,26 @@ int main(void) {
 			i->codepoint, i->is_word ? "" : " not", is ? "" : " not");
 		assert(i->is_word == is);
 	}*/
-	
+	struct unicode_deque info = unicode_load();
+	if(!info.back) goto catch;
+
+	for(struct unicode_deque_cursor i = unicode_deque_begin(&info);
+		unicode_deque_exists(&i); unicode_deque_next(&i)) {
+		const struct unicode *const u = unicode_deque_entry(&i);
+		bool is_2 = u->category == Ll || u->category == Lu || u->category == Lt
+			|| u->category == Lo || u->category == Nd,
+			is_utf8 = is_word(u->utf8);
+		printf("U+%"PRIx32":0x%"PRIx32": %s (%s).\n",
+			u->unicode, u->internal.uint, is_utf8 ? "yes" : "no",
+			is_2 ? "yes" : "no");
+		assert(is_utf8 == is_2);
+	}
+
+	retval = EXIT_SUCCESS;
+	goto finally;
+catch:
+	perror("utf-8 tool");
+finally:
+	unicode_deque_(&info);
+	return retval;
 }
