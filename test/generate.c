@@ -138,9 +138,6 @@ int main(void) {
 		first = false;
 	printf(" };\n");
 
-	/* For this <https://www.unicode.org/reports/tr36/> and also, seek to a
-	 code-point should not be dependant on previous code-points errors'. */
-
 	goto finally;
 catch:
 	perror(errmsg);

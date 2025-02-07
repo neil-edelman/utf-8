@@ -145,48 +145,68 @@ static size_t upper_bound(
 	return low;
 }
 
-/** Does not check for the end of the string. Security warning. */
-static bool is_word(const char *const string_in_utf8) {
-	const uint8_t *const utf8 = (const uint8_t *const)string_in_utf8;
+/** Checks whether the first code-point in `string_in_utf8` (it must be
+ non-empty) is in [\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}] and `output_next` is the
+ potential next code-point, if it isn't the end of the string. Bytes that don't
+ appear in utf-8 are false; it sets `output` to the first non-continuation
+ byte. <https://www.unicode.org/reports/tr36/>, (seek to a code-point should
+ not be dependant on previous code-point's errors.) */
+static bool is_word(const char *const string_in_utf8,
+		char **const output_next) {
+	union {
+		const char *input;
+		const uint8_t *unchar;
+		char *unconst;
+	} string = { .input = string_in_utf8 };
 	union { uint32_t u32; uint8_t u8[4]; } internal = { .u32 = 0 };
 	size_t edge;
-	uint8_t byte = utf8[0];
+
+	uint8_t byte = string.unchar[0];
 	if(byte < 0x80) { /* 1 byte? */
 		internal.u8[0] = byte;
 		edge = upper_bound(utf32_word_edges, 0, utf32_word_byte_end[0],
 			internal.u32);
+		*output_next = string.unconst + 1;
 	} else if((byte & 0xe0) == 0xc0) { /* 2 bytes continued? */
 		internal.u8[1] = byte;
-		byte = utf8[1];
-		if((byte & 0xc0) != 0x80) return assert(0), false;
+		byte = string.unchar[1];
+		if((byte & 0xc0) != 0x80)
+			return *output_next = string.unconst + 1, false;
 		internal.u8[0] = byte;
 		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[0], utf32_word_byte_end[1], internal.u32);
+		*output_next = string.unconst + 2;
 	} else if((byte & 0xf0) == 0xe0) { /* 3 bytes continued? */
 		internal.u8[2] = byte;
-		byte = utf8[1];
-		if((byte & 0xc0) != 0x80) return assert(0), false;
+		byte = string.unchar[1];
+		if((byte & 0xc0) != 0x80)
+			return *output_next = string.unconst + 1, false;
 		internal.u8[1] = byte;
-		byte = utf8[2];
-		if((byte & 0xc0) != 0x80) return assert(0), false;
+		byte = string.unchar[2];
+		if((byte & 0xc0) != 0x80)
+			return *output_next = string.unconst + 2, false;
 		internal.u8[0] = byte;
 		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[1], utf32_word_byte_end[2], internal.u32);
+		*output_next = string.unconst + 3;
 	} else if((byte & 0xf8) == 0xf0) { /* 4 bytes continued? */
 		internal.u8[3] = byte;
-		byte = utf8[1];
-		if((byte & 0xc0) != 0x80) return assert(0), false;
+		byte = string.unchar[1];
+		if((byte & 0xc0) != 0x80)
+			return *output_next = string.unconst + 1, false;
 		internal.u8[2] = byte;
-		byte = utf8[2];
-		if((byte & 0xc0) != 0x80) return assert(0), false;
+		byte = string.unchar[2];
+		if((byte & 0xc0) != 0x80)
+			return *output_next = string.unconst + 2, false;
 		internal.u8[1] = byte;
-		byte = utf8[3];
-		if((byte & 0xc0) != 0x80) return assert(0), false;
+		byte = string.unchar[3];
+		if((byte & 0xc0) != 0x80)
+			return *output_next = string.unconst + 3, false;
 		internal.u8[0] = byte;
 		edge = upper_bound(utf32_word_edges, utf32_word_byte_end[2], utf32_word_byte_end[3], internal.u32);
-	} else { /* Not normalized utf-8 (16.0.0 #44) character. */
-		return assert(0), false;
+		*output_next = string.unconst + 4;
+	} else {
+		/* Not normalized utf-8 (16.0.0 #44) character. Maybe… */
+		return *output_next = string.unconst + 1, false;
 	}
-	/*fprintf(stderr, "(upper(\"0x%"PRIx32"\") = index %zu:\"0x%"PRIx32"\")\n",
-		internal.u32, ub, utf32_word_edges[ub]);*/
 	return edge & 1;
 }
 
@@ -201,10 +221,11 @@ int main(void) {
 	for(struct unicode_deque_cursor i = unicode_deque_begin(&info);
 		unicode_deque_exists(&i); unicode_deque_next(&i)) {
 		const struct unicode *const u = unicode_deque_entry(&i);
+		char *next;
 		bool is_from_catalog
 			= u->category == Ll || u->category == Lu || u->category == Lt
 			|| u->category == Lo || u->category == Nd,
-			is_from_word = is_word(u->utf8);
+			is_from_word = is_word(u->utf8, &next);
 		printf("U+%"PRIx32":0x%"PRIx32": %s (%s).\n",
 			u->unicode, u->internal.uint, is_from_word ? "yes" : "no",
 			is_from_catalog ? "yes" : "no");
