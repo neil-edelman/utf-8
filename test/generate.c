@@ -64,7 +64,32 @@ int main(void) {
 		 <https://unicode.org/reports/tr18/#RL1.4>
 		 "Alphabetic values from the Unicode character" (Lm? we definitely
 		 want Lm? Swift has Lm, experimentally.)
-		 "U+200C ZERO WIDTH NON-JOINER and U+200D ZERO WIDTH JOINER"
+		 "Name: Variation Selectors, Plane: Basic Multilingual Plane, [U+FE00, U+FE0F]"?
+
+		 "Name: Combining Diacritical Marks, Plane: Basic Multilingual Plane, [U+0300, U+036F]"?
+		 M (Mc "spacing mark", Me "enclosing mark", Mn "non-spacing mark")
+		 Seems to include block Combining Diacritical Marks.
+		 <https://www.regular-expressions.info/unicode.html>
+		 So "\p{L}\p{M}*+" (+? word?)
+
+		 U+200B ZWSP is used in a similar way.
+		 U+200C ZERO WIDTH NON-JOINER
+		 U+200D ZERO WIDTH JOINER;
+		 U+2060 Word Joiner (WJ) (indicate that line breaking should not occur at its position) (but can be used to connect punctuation or emijies);
+		 U+FEFF Zero Width No-Break Space (BOM, ZWNBSP) is depreciated, but can be used as this too
+
+		 Independent code-points? no way to get 2 out of "0.0 ... a."; here the "." is used in 3 contexts, only as a decimal separator should in be counted as a word.
+		 Count spaces? "a—i".
+
+		 "one two" 2
+		 "one,two" 2
+		 "one.two" 2
+		 "one_two" 2 (1 in Swift)
+		 "one—two" 2
+		 "0.0 a.b" 4 (but really 3, decimal and period are used interchangeably)
+		 "fi f‌i" 2 (U+200C zwnj is in the second)
+		 "나는  Chicago에  산다" (3 in Swift)
+
 		 */
 		/* Put it in trie if it's a rising-or-falling-edge. */
 		if(!(bytes[u->utf8_size].property ^ is_word)) continue;
@@ -112,6 +137,9 @@ int main(void) {
 		printf("%s%"PRIu32"", first ? "" : ", ", running += bytes[i].size),
 		first = false;
 	printf(" };\n");
+
+	/* For this <https://www.unicode.org/reports/tr36/> and also, seek to a
+	 code-point should not be dependant on previous code-points errors'. */
 
 	goto finally;
 catch:

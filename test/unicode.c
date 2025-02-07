@@ -24,17 +24,37 @@ struct unicode_deque unicode_load(void) {
 	bool little_endian = test.c[0];
 
 	/* Load the unicode data.
-	 <https://www.unicode.org/Public/UNIDATA/UnicodeData.txt> */
+	 <https://www.unicode.org/Public/UNIDATA/UnicodeData.txt>
+	 Specifically, (I am bound by causality, so this may not work).
+	 <https://www.unicode.org/Public/16.0.0/ucd/UnicodeData.txt> */
 	const char *const unicode_fn = "UnicodeData.txt";
 	if(!(unicode_fp = fopen(unicode_fn, "r")))
 		{ errmsg = unicode_fn; goto catch; }
 	fprintf(stderr, "Opened \"%s\" for reading.\n", unicode_fn);
 	char read[256];
+	bool is_first = true;
+	unsigned prev_unicode = 0;
 	while(fgets(read, sizeof read, unicode_fp)) {
 		/* `sscanf` is a hack; whatever. */
 		struct { unsigned unicode; char category[4]; } input;
 		if(sscanf(read, "%x;%*[^;];%3[^;]", &input.unicode,
 			input.category) != 2) { errmsg = unicode_fn; goto catch; };
+
+		/* Require that they are in order. */
+		if(!is_first) {
+			if(prev_unicode >= input.unicode) {
+				errmsg = unicode_fn;
+				fprintf(stderr, "Out-of-order 0x%x and 0x%x.\n",
+					prev_unicode, input.unicode);
+				errno = EDOM;
+				goto catch;
+			}
+		} else {
+			is_first = false;
+		}
+		prev_unicode = input.unicode;
+
+		/* Parse the category. */
 		enum character_category cc = WTF;
 		switch(input.category[0]) {
 		case 'C':
@@ -140,7 +160,7 @@ struct unicode_deque unicode_load(void) {
 			u->internal.byte[0] = v.byte[3], u->internal.byte[1] = v.byte[2],
 			u->internal.byte[2] = v.byte[1], u->internal.byte[3] = v.byte[0];
 		else
-			u->internal.uint = v.uint;
+			u->internal.uint = v.uint; /* Not tested. */
 	}
 	goto finally;
 catch:

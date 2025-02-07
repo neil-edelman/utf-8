@@ -1,7 +1,7 @@
 /** @std C11 */
 #include <inttypes.h>
 
-/*->*/
+/*<!-- input from generate.c */
 static const uint32_t utf32_word_edges[] = {
 	/* 6 code-points. */
 	0x30, 0x3a, 0x41, 0x5b, 0x61, 0x7b,
@@ -125,7 +125,7 @@ static const uint32_t utf32_word_edges[] = {
 	0xf09ea590, 0xf09ea59e, 0xf09eb880, 0xf09ebbb0, 0xf09fafb0, 0xf3a08081
 };
 static const uint32_t utf32_word_byte_end[] = { 6, 62, 468, 768 };
-/*<-*/
+/* --> */
 
 #include <stdbool.h>
 #include <stdio.h>
