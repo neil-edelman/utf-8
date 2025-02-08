@@ -24,15 +24,15 @@ static void next_word(struct word *const w) {
 		octal_digit = [0-7];
 		dec_digit = [0-9];
 		all_other_numeric = N \ [0-9]; // Number.
-		separator = [_]; // Python syntax.
 		decimal = [.];
-		minus = [-];
+		sign = [-+];
 		exp = [e];
-		binary = "b" minus? binary_digit+ (separator binary_digit+)*;
-		hex = "0x" minus? hex_digit+ (separator hex_digit+)*;
-		integer = minus? dec_digit+ (separator dec_digit+)*;
-		money = minus? integer (decimal dec_digit{2,2})? Sc; // Symbol currency. Probably not inclusive
-		real = minus? integer decimal integer (exp minus? integer (decimal integer)?)?;
+		binary = "b" sign? binary_digit+ (Pc binary_digit+)*; // Punctuation connector.
+		hex = "0x" sign? hex_digit+ (Pc hex_digit+)*;
+		positive = dec_digit+ (Pc dec_digit+)*;
+		integer = sign? positive;
+		money = integer (decimal dec_digit{2,2})? Sc; // Symbol currency. Probably not inclusive
+		real = integer decimal positive (exp integer (decimal positive)?)?;
 		number = binary | hex | integer | real | money;
 		letter = L M*; // Letter modifier.
 		word_begin = letter | all_other_numeric;
@@ -67,19 +67,28 @@ int main(void) {
 	size_t count;
 
 	TEST("", 0)
+	TEST(" ,...,,,,.,., ~~~`````", 0)
 	TEST(" yo", 1)
 	TEST("one two", 2)
 	TEST("one,two", 2)
 	TEST("one.two", 2)
-	TEST("one_two", 1)
+	TEST("one_two", 1) /* '_' ∈ connector punctuation Pc. */
 	TEST("one—two", 2)
-	TEST("0.0 a.b", 3)
-	TEST("fi f‌iii", 2) /* U+200C zwnj is in the second */
-	TEST("manœuver…æroplane non-joinerfif‌‌itt‌‌tt what?", 5) /* 4 zwnj */
-	TEST("100,000_000$", 3)
-	TEST("zzzz̀abc de f̀ghi", 3) /* z, U+0300…f, U+0300 combining grave accent */
-	TEST("나는  Chicago에  산다", 3) /* actually 5 */
-	TEST("Ыдентификатор", 1) /* From re2c. */
+	TEST("(1-1i)", 1) /* "(" Number number letter ")". */
+	TEST("0.0 a.b", 3) /* Number " " word "." word. */
+	TEST("fi f‌iii", 2) /* U+200C zwnj is in the second. */
+	TEST("manœuver…æroplane non-joinerfif‌‌itt‌‌tt good?", 5) /* 4 zwnj. */
+	TEST("100,000_000$", 2) /* Number "," number. */
+	TEST("zzzz̀abc de f̀ghi", 3) /* z U+0300…f U+0300 combining grave accent. */
+	/* <https://www.unicode.org/reports/tr29/>. Actually 5? */
+	TEST("나는  Chicago에  산다", 3)
+	TEST("_Ыдентификатор", 1) /* From re2c. "_" word. */
+	TEST("\x80\x80""a a", 2) /* Proper handling of non-utf-8. */
+	TEST("\xc0\x00""a a a a a a", 0)
+	TEST("\xe0\x00""a a a a a a", 0)
+	TEST("\xf0\x00""a a a a a a", 0)
+	TEST("\xf8\x00""a a a a a a", 0)
+	TEST("\xf8""a a a a a a", 6)
 
 	return 0;
 }
