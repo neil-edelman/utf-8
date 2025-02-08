@@ -1,3 +1,7 @@
+#if 0
+int main(void) { }
+
+#else
 /** @license MIT @std C11
 
  Relies on `unicode.c` to parse unicode data specifically for utf-8; puts it
@@ -66,7 +70,6 @@ int main(void) {
 		 "Alphabetic values from the Unicode character" (Lm? we definitely
 		 want Lm? Swift has Lm, experimentally.)
 		 "Name: Variation Selectors, Plane: Basic Multilingual Plane, [U+FE00, U+FE0F]"?
-
 		 "Name: Combining Diacritical Marks, Plane: Basic Multilingual Plane, [U+0300, U+036F]"?
 		 M (Mc "spacing mark", Me "enclosing mark", Mn "non-spacing mark")
 		 Seems to include block Combining Diacritical Marks.
@@ -87,8 +90,17 @@ int main(void) {
 		//	|| u->unicode == 0x200d /* zwj */
 		//	|| u->unicode == 0xfeff /* zwnbsp (has been taken over by bom) */
 		//	|| u->unicode == '_' /* Ahh, Swift does it. */;
+		/* letter = L | M | N | Pc | [\u200b\u200c\u200d\u2060]; */
 		bool is_word = u->category == Ll || u->category == Lu
-			|| u->category == Lt || u->category == Lm || u->category == Lo;
+			|| u->category == Lt || u->category == Lm || u->category == Lo
+			|| u->category == Mc || u->category == Me || u->category == Mn
+			|| u->category == Nd || u->category == Nl || u->category == No
+			|| u->category == Pc
+			|| u->unicode == 0x200b /* zwsp */
+			|| u->unicode == 0x200c /* zwnj */
+			|| u->unicode == 0x200d /* zwj */
+			|| u->unicode == 0x2060; /* wj */
+		/* U+feff zwnbsp bom? U+05f3 Hebrew Punctuation Geresh? */
 
 		/* Put it in trie if it's a rising-or-falling-edge. */
 		if(!(bytes[u->utf8_size].property ^ is_word)) continue;
@@ -137,7 +149,7 @@ int main(void) {
 		first = false;
 	printf(" };\n");
 
-	printf("L = [\n");
+	/*printf("L = [\n");
 	first = true;
 	for(unsigned i = 0; i < 4; i++) {
 		for(struct unicode_trie_cursor cur = unicode_trie_begin(&bytes[i].trie);
@@ -154,7 +166,7 @@ int main(void) {
 			first = false;
 		}
 	}
-	printf("]\n");
+	printf("]\n");*/
 
 	goto finally;
 catch:
@@ -165,3 +177,4 @@ finally:
 	fprintf(stderr, "return \"%s\".\n", errmsg ? errmsg : "fine");
 	return errmsg ? EXIT_FAILURE : EXIT_SUCCESS;
 }
+#endif

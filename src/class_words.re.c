@@ -15,34 +15,11 @@ static void next_word(struct word *const w) {
 		re2c:yyfill:enable = 0;
 		re2c:tags = 1;
 
-		// Simplified "Unicode Identifier and Pattern Syntax"
-		// (see https://unicode.org/reports/tr31) (modified)
-		// Letter and any marks that modify it.
-		// <https://www.regular-expressions.info/unicode.html>
-		binary_digit = [01];
-		hex_digit = [0-9a-fA-F];
-		octal_digit = [0-7];
-		dec_digit = [0-9];
-		all_other_numeric = N \ [0-9]; // Number.
-		decimal = [.];
-		sign = [-+];
-		exp = [e];
-		binary = "b" sign? binary_digit+ (Pc binary_digit+)*; // Punctuation connector.
-		hex = "0x" sign? hex_digit+ (Pc hex_digit+)*;
-		positive = dec_digit+ (Pc dec_digit+)*;
-		integer = sign? positive;
-		money = integer (decimal dec_digit{2,2})? Sc; // Symbol currency. Probably not inclusive
-		real = integer decimal positive (exp integer (decimal positive)?)?;
-		number = binary | hex | integer | real | money;
-		letter = L M*; // Letter modifier.
-		word_begin = letter | all_other_numeric;
-		word_mid = word_begin | Pc | [\u200b\u200c\u200d\u2060]; // Connector punctuation. We specifically don't do "\'" because they are probably separate words. Similarly, garesh \u05F3.
-		word_end = word_begin;
-		word     = word_begin (word_mid* word_end)?;
-		word_like = (word | number)+;
+		// Letters, marks, numbers, connector punctuation, joiners.
+		letter = L | M | N | Pc | [\u200b\u200c\u200d\u2060];
 
 		"\x00" { w->start.u = 0; return; }
-		@w0 word_like @w1 { w->start.u = w0; w->end.u = w1; return; }
+		@w0 letter+ @w1 { w->start.u = w0; w->end.u = w1; return; }
 		* { continue; } */
 	}
 }
@@ -72,10 +49,10 @@ int main(void) {
 	TEST("one two", 2)
 	TEST("one,two", 2)
 	TEST("one.two", 2)
-	TEST("one_two", 1) /* '_' ∈ connector punctuation Pc. */
+	TEST("one_two", 1)
 	TEST("one—two", 2)
-	TEST("(1-1i)", 1) /* "(" Number number letter ")". */
-	TEST("0.0 a.b", 3) /* Number " " word "." word. */
+	TEST("(1-1i)", 2)
+	TEST("0.0 a.b", 4)
 	TEST("fi f‌iii", 2) /* U+200C zwnj is in the second. */
 	TEST("manœuver…æroplane non-joinerfif‌‌itt‌‌tt good?", 5) /* 4 zwnj. */
 	TEST("100,000_000$", 2) /* Number "," number. */
