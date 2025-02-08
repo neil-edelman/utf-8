@@ -1,7 +1,7 @@
-/** @std C11 */
+/** @license mit @std c11 */
 #include <inttypes.h>
 
-/*<!-- input from generate.c */
+/*<!-- input: generate.c */
 static const uint32_t utf32_word_edges[] = {
 	/* 6 code-points. */
 	0x30, 0x3a, 0x41, 0x5b, 0x61, 0x7b,
@@ -131,20 +131,23 @@ static const uint32_t utf32_word_byte_end[] = { 6, 62, 468, 768 };
 #include <stdio.h>
 #include <assert.h>
 
+/* <!-- from: test-upper.c */
+/** @return The majorant of `key` on the set `table` between (`low`, `high`].
+ @order O(log `high` - `low`) */
 static size_t upper_bound(
 	const uint32_t *const table,
 	size_t low, size_t high,
 	const uint32_t key) {
 	while(low < high) {
 		size_t mid = low + (high - low) / 2;
-		//fprintf(stderr, " (%zu <-%zu(%0x"PRIx32")-> %zu)\n", low, mid, table[mid], high);
 		if(table[mid] <= key) low = mid + 1;
 		else high = mid;
 	}
-	//fprintf(stderr, " (ub(0x%"PRIx32")=#%zu 0x%"PRIx32")\n", key, low, table[low]);
 	return low;
 }
+/* --> */
 
+/* <!-- truth */
 /** Checks whether the first code-point in `string_in_utf8` (it must be
  non-empty) is in [\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}] and `output_next` is the
  potential next code-point, if it isn't the end of the string. Bytes that don't
@@ -209,6 +212,7 @@ static bool is_word(const char *const string_in_utf8,
 	}
 	return edge & 1;
 }
+/* --> */
 
 #include "unicode.h"
 #include <stdbool.h>
@@ -230,6 +234,7 @@ int main(void) {
 			u->unicode, u->internal.uint, is_from_word ? "yes" : "no",
 			is_from_catalog ? "yes" : "no");
 		assert(is_from_word == is_from_catalog);
+		assert(next == u->utf8 + u->utf8_size);
 	}
 
 	retval = EXIT_SUCCESS;

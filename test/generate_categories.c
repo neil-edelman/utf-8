@@ -1,4 +1,11 @@
-/** @license MIT @std C11 */
+/** @license MIT @std C11
+
+ Relies on `unicode.c` to parse unicode data specifically for utf-8; puts it
+ into character category tables. The tables are paired (except possibly the
+ last which might be infinite) [min, max) of inclusion in the property. Outputs
+ `uint32_t` tables. */
+
+static const unsigned tab = 4, wrap = 76;
 
 #include "unicode.h"
 #include <stdlib.h>
@@ -16,8 +23,6 @@ static const char *unicode_key(/*const<-it is not, technically :( */ struct unic
 #define TRIE_ENTRY struct unicode *
 #define TRIE_TO_STRING
 #include "../src/trie.h"
-
-static const unsigned tab = 4, wrap = 76;
 
 static void print_byte(const struct unicode_trie *const unicode) {
 	bool first = true;
@@ -49,17 +54,13 @@ int main(void) {
 	info = unicode_load();
 	if(!info.back) goto catch;
 
-	/* Detect the endianness. */
-	/*const union { uint32_t a; uint8_t b[4]; } test = { .a = 1 };
-	bool little_endian = test.b[0];*/
-
 	/* Pick a property. */
 	for(struct unicode_deque_cursor cur = unicode_deque_begin(&info);
 		unicode_deque_exists(&cur); unicode_deque_next(&cur)) {
 		/*const?*/ struct unicode **put_data_here;
 		/*const?*/ struct unicode *const u = unicode_deque_entry(&cur);
-		bool is_word = u->category == Ll || u->category == Lu
-			|| u->category == Lt || u->category == Lo || u->category == Nd;
+		/*bool is_word = u->category == Ll || u->category == Lu
+			|| u->category == Lt || u->category == Lo || u->category == Nd;*/
 		/* fixme: To be in Unicode Level 1,
 		 <https://unicode.org/reports/tr18/#RL1.4>
 		 "Alphabetic values from the Unicode character" (Lm? we definitely
@@ -76,21 +77,18 @@ int main(void) {
 		 U+200C ZERO WIDTH NON-JOINER
 		 U+200D ZERO WIDTH JOINER;
 		 U+2060 Word Joiner (WJ) (indicate that line breaking should not occur at its position) (but can be used to connect punctuation or emijies);
-		 U+FEFF Zero Width No-Break Space (BOM, ZWNBSP) is depreciated, but can be used as this too
+		 U+FEFF Zero Width No-Break Space (BOM, ZWNBSP) is depreciated, but can be used as this too. */
+		//bool is_word = u->category == Ll || u->category == Lu
+		//	|| u->category == Lt || u->category == Lm || u->category == Lo
+		//	|| u->category == Mc || u->category == Me || u->category == Mn
+		//	|| u->category == Nd || u->category == Nl || u->category == No
+		//	|| u->unicode == 0x200b /* zwsp */
+		//	|| u->unicode == 0x200c /* zwnj */
+		//	|| u->unicode == 0x200d /* zwj */
+		//	|| u->unicode == 0xfeff /* zwnbsp (has been taken over by bom) */
+		//	|| u->unicode == '_' /* Ahh, Swift does it. */;
+		bool is_word = u->category == Ll || u->category == Lu;
 
-		 Independent code-points? no way to get 2 out of "0.0 ... a."; here the "." is used in 3 contexts, only as a decimal separator should in be counted as a word.
-		 Count spaces? "a—i".
-
-		 "one two" 2
-		 "one,two" 2
-		 "one.two" 2
-		 "one_two" 2 (1 in Swift)
-		 "one—two" 2
-		 "0.0 a.b" 4 (but really 3, decimal and period are used interchangeably)
-		 "fi f‌i" 2 (U+200C zwnj is in the second)
-		 "나는  Chicago에  산다" (3 in Swift)
-
-		 */
 		/* Put it in trie if it's a rising-or-falling-edge. */
 		if(!(bytes[u->utf8_size].property ^ is_word)) continue;
 		bytes[u->utf8_size].property = is_word;
@@ -142,9 +140,7 @@ int main(void) {
 catch:
 	perror(errmsg);
 finally:
-	fprintf(stderr, "shutting down tries\n");
 	for(size_t i = 0; i < 4; i++) unicode_trie_(&bytes[i].trie);
-	fprintf(stderr, "shutting down info\n");
 	unicode_deque_(&info);
 	fprintf(stderr, "return \"%s\".\n", errmsg ? errmsg : "fine");
 	return errmsg ? EXIT_FAILURE : EXIT_SUCCESS;
