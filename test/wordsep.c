@@ -1,4 +1,9 @@
-/** @license mit @std c11 */
+/** @license mit @std c11
+
+ I realize that this is just starting on a project that is going to turn into…
+ re2c. <https://re2c.org/manual/manual_c.html#encoding-support> has, since
+ 2019, already there. So that's quite easy, I guess. It's even got Graphviz
+ support. */
 
 #include <inttypes.h>
 

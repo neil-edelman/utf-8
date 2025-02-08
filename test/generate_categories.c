@@ -87,7 +87,8 @@ int main(void) {
 		//	|| u->unicode == 0x200d /* zwj */
 		//	|| u->unicode == 0xfeff /* zwnbsp (has been taken over by bom) */
 		//	|| u->unicode == '_' /* Ahh, Swift does it. */;
-		bool is_word = u->category == Ll || u->category == Lu;
+		bool is_word = u->category == Ll || u->category == Lu
+			|| u->category == Lt || u->category == Lm || u->category == Lo;
 
 		/* Put it in trie if it's a rising-or-falling-edge. */
 		if(!(bytes[u->utf8_size].property ^ is_word)) continue;
@@ -136,12 +137,31 @@ int main(void) {
 		first = false;
 	printf(" };\n");
 
+	printf("L = [\n");
+	first = true;
+	for(unsigned i = 0; i < 4; i++) {
+		for(struct unicode_trie_cursor cur = unicode_trie_begin(&bytes[i].trie);
+			unicode_trie_exists(&cur); unicode_trie_next(&cur)) {
+			const struct unicode *const u0 = *unicode_trie_entry(&cur);
+			unicode_trie_next(&cur);
+			if(!unicode_trie_exists(&cur))
+				{ fprintf(stderr, "Must be even.\n"); goto catch; }
+			const struct unicode *const u1 = *unicode_trie_entry(&cur);
+			char abbr = 'U'; unsigned prec = 8;
+			if(u1->unicode < 0x10000) abbr = 'u', prec = 4;
+			if(u1->unicode < 0x100) abbr = 'x', prec = 2;
+			printf("\\%c%.*"PRIx32"-\\%c%.*"PRIx32"\n", abbr, prec, u0->unicode, abbr, prec, u1->unicode - 1);
+			first = false;
+		}
+	}
+	printf("]\n");
+
 	goto finally;
 catch:
 	perror(errmsg);
 finally:
-	for(size_t i = 0; i < 4; i++) unicode_trie_(&bytes[i].trie);
 	unicode_deque_(&info);
+	for(size_t i = 0; i < 4; i++) unicode_trie_(&bytes[i].trie);
 	fprintf(stderr, "return \"%s\".\n", errmsg ? errmsg : "fine");
 	return errmsg ? EXIT_FAILURE : EXIT_SUCCESS;
 }
