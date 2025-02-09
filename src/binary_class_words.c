@@ -190,6 +190,8 @@ static bool is_word(const char *const string_in_utf8,
 }
 /* --> */
 
+//struct word { union { const char *c; const uint8_t *u; } start, end; };
+
 #include <stdlib.h>
 #include <stdio.h>
 
