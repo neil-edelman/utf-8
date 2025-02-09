@@ -12,6 +12,32 @@ int T_(graph_fn)(const pT_(box) *, const char *);
 #	endif
 #	ifndef BOX_DECLARE_ONLY
 
+#	ifndef GRAPH_SANITIZE
+#		define GRAPH_SANITIZE
+static void private_graph_sanitize(FILE *const fp, const char *str) {
+	const char *lazy = str, *escape;
+	size_t escape_size;
+	int keep_going = 1;
+	assert(str && fp);
+	do {
+		unsigned char ch = (unsigned char)*str;
+		if(ch == '\0') { escape = "", escape_size = 0, keep_going = 0; goto force; }
+		switch(ch) {
+		case '&': escape = "&amp;", escape_size = 5; goto force;
+		case '<': escape = "&lt;", escape_size = 4; goto force;
+		case '>': escape = "&gt;", escape_size = 4; goto force;
+		case '\"': escape = "&quot;", escape_size = 6; goto force;
+		case '\'': escape = "&#39;", escape_size = 5; goto force;
+		default: continue;
+		}
+force:
+		fwrite(lazy, 1, (size_t)(str - lazy), fp);
+		fwrite(escape, 1, escape_size, fp);
+		lazy = str + 1;
+	} while(str++, keep_going);
+}
+#	endif
+
 /* Must link the file produced by compiling `orcish.c` to do tests or get
  graphs. (It is particularly useful for debugging—it translates gobbledygook
  pointer addresses into more semi-meaningful deterministic orc names. We have
@@ -60,12 +86,14 @@ static void T_(graph)(const struct t_(array) *const array, FILE *const fp) {
 		"\t<hr/>\n", orcify(array->data));
 	for(i = 0; i < array->size; i++) {
 		const char *const bgc = i & 1 ? " bgcolor=\"Gray95\"" : "";
-		t_(to_string)((void *)(array->data + i), &z);
+		t_(to_string)((void *)(array->data + i), &z), z[11] = '\0';
 		fprintf(fp, "\t<tr>\n"
 			"\t\t<td align=\"right\"%s>"
 			"<font face=\"Times-Italic\">%lu</font></td>\n"
-			"\t\t<td align=\"left\"%s>%s</td>\n"
-			"\t</tr>\n", bgc, (unsigned long)i, bgc, z);
+			"\t\t<td align=\"left\"%s>", bgc, (unsigned long)i, bgc);
+		private_graph_sanitize(fp, z);
+		fprintf(fp, "</td>\n"
+			"\t</tr>\n");
 	}
 	fprintf(fp, "\t<hr/>\n"
 		"\t<tr><td></td></tr>\n"
@@ -94,33 +122,55 @@ static void T_(graph)(const struct t_(deque) *const deque, FILE *const fp) {
 		"<table border=\"0\" cellspacing=\"0\">\n"
 		"\t<tr><td align=\"left\">"
 		"<font color=\"Gray75\">&lt;" QUOTE(DEQUE_NAME)
-		"&gt;deque: " QUOTE(DEQUE_TYPE) "</font></td></tr>\n"
+		"&gt;deque</font></td></tr>\n"
+		"\t<hr/>\n"
+		"\t<tr><td align=\"left\">" QUOTE(DEQUE_TYPE) "</td></tr>\n"
 		"</table>>];\n", shape);
-	for(block = deque->front; block; block = block->previous) {
+
+#			ifdef DEQUE_FRONT
+	for(block = deque->front; block; block = block->next)
+#			else
+	for(block = deque->back; block; block = block->previous)
+#			endif
+	{
 		fprintf(fp, "\t%s -> ", shape);
 		sprintf(shape, "block%p", (void *)block);
-		fprintf(fp, "%s;\n"
-			"\tblock%p [label=<\n"
+#			ifdef DEQUE_FRONT
+		fprintf(fp, "%s;\n", shape);
+#			else
+		fprintf(fp, "%s [style=\"dashed\"];\n", shape);
+#			endif
+		fprintf(fp, "\tblock%p [label=<\n"
 			"<table border=\"0\" cellspacing=\"0\">\n"
 			"\t<tr><td colspan=\"2\" align=\"left\">"
 			"<font color=\"Gray75\">%s</font></td></tr>\n"
 			"\t<tr><td colspan=\"2\" align=\"left\">%lu/%lu</td></tr>\n"
-			"\t<hr/>\n", shape, (void *)block, orcify(block),
+			"\t<hr/>\n", (void *)block, orcify(block),
 			(unsigned long)block->size,
 			(unsigned long)block->capacity);
 		for(i = 0; i < block->size; i++) {
 			const char *const bgc = i & 1 ? " bgcolor=\"Gray95\"" : "";
-			t_(to_string)((void *)(block->data + i), &z);
+			t_(to_string)((void *)(block->data + i), &z), z[11] = '\0';
 			fprintf(fp, "\t<tr>\n"
 				"\t\t<td align=\"right\"%s>"
 				"<font face=\"Times-Italic\">%lu</font></td>\n"
-				"\t\t<td align=\"left\"%s>%s</td>\n"
-				"\t</tr>\n", bgc, (unsigned long)i, bgc, z);
+					"\t\t<td align=\"left\"%s>", bgc, (unsigned long)i, bgc);
+			private_graph_sanitize(fp, z);
+			fprintf(fp, "</td>\n"
+				"\t</tr>\n");
 		}
 		if(block->size) fprintf(fp, "\t<hr/>\n");
 		fprintf(fp, "\t<tr><td></td></tr>\n"
 			"</table>>];\n");
 	}
+#			ifdef DEQUE_FRONT
+	strcpy(shape, "deque");
+	for(block = deque->back; block; block = block->previous) {
+		fprintf(fp, "\t%s -> ", shape);
+		sprintf(shape, "block%p", (void *)block);
+		fprintf(fp, "%s [style=\"dashed\"];\n", shape);
+	}
+#			endif
 	fprintf(fp, "}\n");
 }
 
@@ -143,8 +193,10 @@ static void T_(graph)(const struct t_(heap) *const heap, FILE *const fp) {
 		"\tedge [arrowhead = none];\n");
 	for(i = 0; i < heap->as_array.size; i++) {
 		const pT_(priority) *const p = heap->as_array.data + i;
-		t_(to_string)(p, &a);
-		fprintf(fp, "\t\tn%lu [label=\"%s\"];\n", (unsigned long)i, a);
+		t_(to_string)(p, &a), a[11] = '\0';
+		fprintf(fp, "\t\tn%lu [label=\"", (unsigned long)i);
+		private_graph_sanitize(fp, a);
+		fprintf(fp, "\"];\n");
 		if(!i) continue;
 		fprintf(fp, "\t\tn%lu -> n%lu;\n",
 			(unsigned long)((i - 1) / 2), (unsigned long)i);
@@ -217,8 +269,10 @@ static void pT_(subgraph)(const struct t_(list) *const list, FILE *const fp,
 	}
 	for(link = T_(head)(list); link; link = T_(link_next)(link)) {
 		if(is_nodes) {
-			t_(to_string)(link, &a);
-			fprintf(fp, "\t%s [label=\"%s\"];\n", pT_(name)(link), a);
+			t_(to_string)(link, &a), a[11] = '\0';
+			fprintf(fp, "\t%s [label=\"", pT_(name)(link));
+			private_graph_sanitize(fp, a);
+			fprintf(fp, "\"];\n");
 		}
 		fprintf(fp, "\t%s -> %s [color=\"%s\"];\n"
 			"\t%s -> %s [color=\"%s4\", style=\"dotted\","
@@ -252,7 +306,6 @@ static void T_(graph)(const struct t_(list) *const list, FILE *const fp) {
 /** Graphs `pool` output to `fp`. */
 static void T_(graph)(const struct t_(pool) *const pool,
 	FILE *const fp) {
-	char str[12];
 	size_t i, j;
 	struct pT_(slot) *slot;
 	pT_(type) *slab;
@@ -351,7 +404,7 @@ no_free0:
 				slot->size);
 			goto no_slab_data;
 		}
-		/* Primary buffer: print rows. */
+		/* Primary buffer: print rows. (Fixme: probably too hash!) */
 		if(!(bmp = calloc(slot->size, sizeof *bmp)))
 			{ perror("temp bitmap"); assert(0); exit(EXIT_FAILURE); }
 		for(j = 0; j < pool->free0.as_array.size; j++) {
@@ -367,8 +420,9 @@ no_free0:
 				fprintf(fp, "<font color=\"Gray50\" face=\"Times-Italic\">%lu</font>",
 					(unsigned long)j);
 			} else {
-				t_(to_string)(slab + j, &str);
-				fprintf(fp, "%s", str);
+				char str[12];
+				t_(to_string)(slab + j, &str), str[11] = '\0';
+				private_graph_sanitize(fp, str);
 			}
 			fprintf(fp, "</td></tr>\n");
 		}
@@ -524,19 +578,20 @@ static void T_(graph)(const struct t_(table) *const table, FILE *const fp) {
 #			else
 			t_(to_string)(pT_(bucket_key)(b), &z);
 #			endif
+			z[11] = '\0';
 			fprintf(fp, "\t\t<td align=\"right\"%s>0x%lx</td>\n"
 				"\t\t<td align=\"left\"%s>"
 #			ifdef TABLE_UNHASH
 				"<font face=\"Times-Italic\">"
 #			endif
-				"%s"
+				, bgc, (unsigned long)b->hash, bgc);
+			private_graph_sanitize(fp, z);
+			fprintf(fp,
 #			ifdef TABLE_UNHASH
 				"</font>"
 #			endif
 				"</td>\n"
 				"\t\t<td port=\"%lu\"%s>%s</td>\n",
-				bgc, (unsigned long)b->hash,
-				bgc, z,
 				(unsigned long)i, bgc, closed);
 		} else {
 			fprintf(fp, "\t\t<td%s></td><td%s></td><td%s></td>\n",
@@ -600,8 +655,11 @@ static void pT_(subgraph)(const struct pT_(tree) *const sub, FILE *fp) {
 #			else
 		t_(to_string)(sub->bough->key[i], &z);
 #			endif
+		z[11] = '\0';
 		fprintf(fp, "\t<tr><td border=\"0\" align=\"left\""
-			" port=\"%u\"%s>%s</td></tr>\n", i + 1, bgc, z);
+			" port=\"%u\"%s>", i + 1, bgc);
+		private_graph_sanitize(fp, z);
+		fprintf(fp, "</td></tr>\n");
 	}
 	fprintf(fp, "\t<hr/>\n"
 		"\t<tr><td></td></tr>\n"
@@ -647,8 +705,11 @@ static void pT_(subgraph_usual)(const struct pT_(tree) *const sub, FILE *fp) {
 #			else
 		t_(to_string)(sub->bough->key[i], &z);
 #			endif
+		z[11] = '\0';
 		fprintf(fp, "\t<td border=\"0\" align=\"center\""
-			" port=\"%u\">%s</td>\n", i, z);
+			" port=\"%u\">", i);
+		private_graph_sanitize(fp, z);
+		fprintf(fp, "</td>\n");
 	}
 	/* Dummy node when size is zero. */
 	if(!sub->bough->size)
@@ -776,45 +837,6 @@ static unsigned pT_(left_leaf)(const struct pT_(bough) *const tr,
 	return i;
 }
 
-#include <ctype.h>
-static const char *pT_(sanitize)(const char *str) {
-	static char sanitized[64];
-	const char hex[] = "0123456789abcdef";
-	size_t i = 0;
-	for(i = 0; i < sizeof *sanitized - 1 /*nul*/ - 3 /*…*/
-		- 6 /*&amp;,&quot;,&#039;,&lt;,&gt;*/; ) {
-		const char s = *(str++);
-		if(s == '\0') { sanitized[i] = '\0'; return sanitized; }
-		else if((s & 0x80) == 0 && !isgraph(s)) {
-			sanitized[i++] = 'x';
-			sanitized[i++] = hex[s >> 4u];
-			sanitized[i++] = hex[s & 0x0f];
-			continue;
-		} else switch(s) {
-		case '&': sanitized[i++] = '&'; sanitized[i++] = 'a';
-			sanitized[i++] = 'm'; sanitized[i++] = 'p'; sanitized[i++] = ';';
-			break;
-		case '\"': sanitized[i++] = '&'; sanitized[i++] = 'q';
-			sanitized[i++] = 'u'; sanitized[i++] = 'o'; sanitized[i++] = 't';
-			sanitized[i++] = ';'; break;
-		case '\'': sanitized[i++] = '&'; sanitized[i++] = '#';
-			sanitized[i++] = '0'; sanitized[i++] = '3'; sanitized[i++] = '9';
-			sanitized[i++] = ';'; break;
-		case '<': sanitized[i++] = '&'; sanitized[i++] = 'g';
-			sanitized[i++] = 't'; sanitized[i++] = ';'; break;
-		case '>': sanitized[i++] = '&'; sanitized[i++] = 'l';
-			sanitized[i++] = 't'; sanitized[i++] = ';'; break;
-		default:
-			sanitized[i++] = s;
-		}
-	}
-	sanitized[i++] = (char)0xe2; /* … */
-	sanitized[i++] = (char)0x80;
-	sanitized[i++] = (char)0xa6;
-	sanitized[i++] = (char)0x00;
-	return sanitized;
-}
-
 /** Graphs `tree` on `fp`. `treebit` is the number of bits currently
  (recursive.) */
 static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
@@ -830,22 +852,13 @@ static void pT_(graph_tree_bits)(const struct pT_(bough) *const tree,
 		const char *params, *start, *end;
 		struct { unsigned br0, br1; } in_tree;
 		const unsigned is_link = trie_bmp_test(&tree->bmp, i);
-
-		struct unicode *u;
-		{
-			union { const struct pT_(bough) *readonly; struct pT_(bough) *promise; }
-				slybox;
-			struct pT_(ref) ref;
-			slybox.readonly = tree, ref.tree = slybox.promise, ref.lf = i;
-			pT_(lower_entry)(&ref);
-			u = *pT_(ref_to_remit)(&ref);
-		}
-
 		/* 0-width joiner "&#8288;": GraphViz gets upset when tag closed
 		 immediately. */
 		fprintf(fp, "\t<tr>\n"
-			"\t\t<td align=\"left\" port=\"%u\">%s%s%s⊔</font></td>\n",
-			i, is_link ? "↓<font color=\"Grey75\">" : "", pT_(sanitize)(key),
+			"\t\t<td align=\"left\" port=\"%u\">%s",
+			i, is_link ? "↓<font color=\"Grey75\">" : "");
+		private_graph_sanitize(fp, key);
+		fprintf(fp, "%s⊔</font></td>\n",
 			is_link ? "" : "<font color=\"Grey75\">");
 		in_tree.br0 = 0, in_tree.br1 = tree->bsize;
 		for(b = 0; in_tree.br0 < in_tree.br1; b++) {
@@ -905,7 +918,7 @@ static void pT_(graph_tree_mem)(const struct pT_(bough) *const tree,
 	(void)treebit;
 	assert(tree && fp);
 	/* Tree is one record node in memory -- GraphViz says html is
-	 case-insensitive, but no. */
+	 case-insensitive, but no? */
 	fprintf(fp, "\ttree%pbranch0 [label = <\n"
 		"<table border=\"0\" cellspacing=\"0\">\n"
 		"\t<tr><td colspan=\"3\" align=\"left\">"
@@ -934,11 +947,10 @@ static void pT_(graph_tree_mem)(const struct pT_(bough) *const tree,
 				"\t\t<td>&#8205;</td>\n");
 		}
 		fprintf(fp, "\t\t<td align=\"left\" port=\"%u\"%s>"
-			"%s%s%s⊔</font></td>\n"
-			"\t</tr>\n",
-			i, bgc, is_link ? "↓<font color=\"Grey75\">" : "", pT_(sanitize)(key),
-			is_link ? "" : "<font color=\"Grey75\">");
-			/* Should really escape it . . . don't have weird characters. */
+			"%s", i, bgc, is_link ? "↓<font color=\"Grey75\">" : "");
+		private_graph_sanitize(fp, key);
+		fprintf(fp, "%s⊔</font></td>\n"
+			"\t</tr>\n", is_link ? "" : "<font color=\"Grey75\">");
 	}
 	fprintf(fp, "\t<hr/>\n"
 		"\t<tr><td></td></tr>\n"
@@ -1030,9 +1042,9 @@ static void pT_(graph_tree_logic)(const struct pT_(bough) *const tr,
 			slybox;
 		struct pT_(ref) ref;
 		slybox.readonly = tr, ref.tree = slybox.promise, ref.lf = i;
-		fprintf(fp,
-			"\ttree%pleaf%u [label = <%s<font color=\"Gray75\">⊔</font>>];\n",
-			(const void *)tr, i, pT_(sanitize)(pT_(ref_to_string)(&ref)));
+		fprintf(fp, "\ttree%pleaf%u [label = <", (const void *)tr, i);
+		private_graph_sanitize(fp, pT_(ref_to_string)(&ref));
+		fprintf(fp, "<font color=\"Gray75\">⊔</font>>];\n");
 	}
 
 	for(i = 0; i <= tr->bsize; i++) if(trie_bmp_test(&tr->bmp, i))
@@ -1116,8 +1128,12 @@ static int T_(graph_fn)(const pT_(box) *const box, const char *const fn) {
 #		define BOX_PRIVATE_AGAIN
 #		include "box.h"
 static void pT_(unused_graph_coda)(void);
-static void pT_(unused_graph)(void)
-	{ T_(graph)(0, 0); T_(graph_fn)(0, 0); pT_(unused_graph_coda)(); }
+static void pT_(unused_graph)(void) {
+	T_(graph)(0, 0); T_(graph_fn)(0, 0);
+#		ifdef TRIE_NAME
+	T_(graph_all)(0, 0, 0);
+#		endif
+	pT_(unused_graph_coda)(); }
 static void pT_(unused_graph_coda)(void) { pT_(unused_graph)(); }
 
 #	endif /* Not declare-only. */

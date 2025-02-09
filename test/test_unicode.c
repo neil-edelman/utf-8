@@ -1,8 +1,9 @@
-#include "unicode.h"
+#include "../src/unicode.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
 
+/** fixme: This is not really a test. */
 int main(void) {
 	int ret_val = EXIT_FAILURE;
 	errno = 0;
@@ -17,7 +18,7 @@ int main(void) {
 	ret_val = EXIT_SUCCESS;
 	goto finally;
 catch:
-	perror("main");
+	perror("Unicode test");
 finally:
 	unicode_deque_(&info);
 	return ret_val;
