@@ -1,6 +1,6 @@
 /** @license mit @std c11 */
 
-#include "../src/binary_is_delimited.h"
+#include "../src/binary_is_delimit.h"
 #include "../src/unicode.h"
 #include "test_sentences.h"
 #include <inttypes.h>

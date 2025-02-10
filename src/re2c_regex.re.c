@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "delimited.h"
+#include "delimit.h"
 
 /*!include:re2c "unicode_categories.re" */
 

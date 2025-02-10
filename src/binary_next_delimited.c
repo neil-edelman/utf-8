@@ -5,9 +5,9 @@
  2019, already there. So that's quite easy, I guess. It's even got Graphviz
  support. */
 
-#include "binary_is_delimited.h"
-#include "delimited.h"
-#include "binary_next_delimited.h"
+#include "binary_is_delimit.h"
+#include "delimit.h"
+#include "binary_next_delimit.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>

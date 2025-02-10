@@ -1,6 +1,6 @@
 #include "test_sentences.h"
-#include "../src/delimited.h"
-#include "../src/binary_next_delimited.h"
+#include "../src/delimit.h"
+#include "../src/binary_next_delimit.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
