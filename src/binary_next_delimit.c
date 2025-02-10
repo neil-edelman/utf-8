@@ -13,15 +13,15 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-void binary_next_delimited(struct delimited *const w) {
+void binary_next_delimit(struct delimit *const w) {
 	const char *cursor = w->end.c, *next;
 	while(*cursor != '\0') {
 		/* While it's not a word. */
-		if(!binary_is_delimited(cursor, &next))
+		if(!binary_is_delimit(cursor, &next))
 			{ cursor = next; continue; }
 		/* Now it's a word. */
 		w->start.c = cursor, cursor = next;
-		while(binary_is_delimited(cursor, &next)) cursor = next;
+		while(binary_is_delimit(cursor, &next)) cursor = next;
 		w->end.c = cursor;
 		return;
 	}

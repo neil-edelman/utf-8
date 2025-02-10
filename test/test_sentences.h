@@ -2,7 +2,7 @@
 
 static const struct test {
 	const char *sentence;
-	size_t delimited_count_basic, delimited_count_regex;
+	size_t delimit_count_basic, delimit_count_regex;
 } sentences[] = {
 	{ "", 0, 0 },
 	{ " yo", 1, 1 },

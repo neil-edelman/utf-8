@@ -7,7 +7,7 @@
 /*!include:re2c "unicode_categories.re" */
 
 /** To begin, `w` end must be set to the string. */
-void re2c_regex_next_delimited(struct delimited *const w) {
+void re2c_regex_next_delimit(struct delimit *const w) {
 	const uint8_t *YYCURSOR = w->end.u, *YYMARKER, *yyt1 = 0, *w0, *w1;
 	for( ; ; ) {
 		/*!re2c

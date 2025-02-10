@@ -6,19 +6,19 @@
 #include <assert.h>
 
 int main(void) {
-	struct delimited delimited;
+	struct delimit delimit;
 	for(const struct test *t = sentences,
 		*t_end = t + sizeof sentences / sizeof *sentences;
 		t < t_end; t++) {
 		size_t count = 0;
-		for(delimited.end.c = t->sentence; ; ) {
-			binary_next_delimited(&delimited);
-			if(!delimited.start.c) break;
-			printf("\"%.*s\"\n", (int)(delimited.end.c - delimited.start.c), delimited.start.c);
+		for(delimit.end.c = t->sentence; ; ) {
+			binary_next_delimit(&delimit);
+			if(!delimit.start.c) break;
+			printf("\"%.*s\"\n", (int)(delimit.end.c - delimit.start.c), delimit.start.c);
 			count++;
 		}
-		printf("\"%s\": %zu; supposed to be %zu.\n", t->sentence, count, t->delimited_count_basic);
-		assert(count == t->delimited_count_basic);
+		printf("\"%s\": %zu; supposed to be %zu.\n", t->sentence, count, t->delimit_count_basic);
+		assert(count == t->delimit_count_basic);
 	}
 
 	return EXIT_SUCCESS;

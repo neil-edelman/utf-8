@@ -27,7 +27,7 @@ int main(void) {
 			|| u->unicode == 0x200c /* zwnj */
 			|| u->unicode == 0x200d /* zwj */
 			|| u->unicode == 0x2060, /* wj */
-			is_from_word = binary_is_delimited(u->utf8, &next);
+			is_from_word = binary_is_delimit(u->utf8, &next);
 		printf("U+%"PRIx32":0x%"PRIx32": %s (%s).\n",
 			u->unicode, u->internal.uint, is_from_word ? "yes" : "no",
 			is_from_catalog ? "yes" : "no");
@@ -38,7 +38,7 @@ int main(void) {
 	retval = EXIT_SUCCESS;
 	goto finally;
 catch:
-	perror("test binary is delimited");
+	perror("test binary is delimit");
 finally:
 	unicode_deque_(&info);
 	return retval;

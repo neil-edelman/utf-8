@@ -12,7 +12,7 @@
  the first non-continuation byte. <https://www.unicode.org/reports/tr36/>,
  (seek to a code-point should not be dependant on previous code-point's
  errors.) */
-static bool binary_is_delimited(const char *const string_in_utf8,
+static bool binary_is_delimit(const char *const string_in_utf8,
 		const char **const output_next) {
 	const union {
 		const char *input;
