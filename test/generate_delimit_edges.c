@@ -96,13 +96,13 @@ int main(void) {
 	/* Output tries. */
 	for(unsigned i = 0; i < 4; i++) {
 		char trie_name[32];
-		sprintf(trie_name, "trie-%u-byte.gv", i + 1);
+		sprintf(trie_name, "graph/trie-%u-byte.gv", i + 1);
 		unicode_trie_graph_all(&bytes[i].trie, trie_name, 0);
 	}
 
 	/* Output the programme. */
 	printf("#include <stdint.h>\n\n"
-		"static const uint32_t utf32_word_edges[] = {\n"
+		"static const uint32_t utf8_delimit_edges[] = {\n"
 		"\t/* %"PRIu32" code-points. */\n", bytes[0].size);
 	print_byte(&bytes[0].trie);
 	printf(",\n"
@@ -119,7 +119,7 @@ int main(void) {
 
 	uint32_t running = 0;
 	bool first = true;
-	printf("static const uint32_t utf32_word_byte_end[] = { ");
+	printf("static const size_t utf8_delimit_end[] = { ");
 	for(unsigned i = 0; i < 4; i++)
 		printf("%s%"PRIu32"", first ? "" : ", ", running += bytes[i].size),
 		first = false;
@@ -132,7 +132,7 @@ finally:
 	unicode_deque_(&info);
 	for(size_t i = 0; i < 4; i++) unicode_trie_(&bytes[i].trie);
 	/* Some vfprintf errors and Swift scaffolding causes this to crash? */
-	/*fprintf(stderr, "return \"%s\".\n", errmsg ? errmsg : "fine");*/
+	fprintf(stderr, "This is generate_delimit_edges.\n");
 	exit(errmsg ? EXIT_FAILURE : EXIT_SUCCESS);
 	/*return errmsg ? EXIT_FAILURE : EXIT_SUCCESS;*/
 }

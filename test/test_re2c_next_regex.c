@@ -1,29 +1,3 @@
-// re2c $INPUT -o $OUTPUT -8 --case-ranges [--encoding-policy substitute --input-encoding utf8] -i
-#include <assert.h>
-#include <stdint.h>
-
-struct word { union { const char *c; const uint8_t *u; } start, end; };
-
-/*!include:re2c "unicode_categories.re" */
-
-/** To begin, `w` end must be set to the string. */
-static void next_word(struct word *const w) {
-	const uint8_t *YYCURSOR = w->end.u, *YYMARKER, *yyt1 = 0, *w0, *w1;
-	for( ; ; ) {
-		/*!re2c
-		re2c:define:YYCTYPE = 'uint8_t';
-		re2c:yyfill:enable = 0;
-		re2c:tags = 1;
-
-		// Letters, marks, numbers, connector punctuation, joiners.
-		letter = L | M | N | Pc | [\u200b\u200c\u200d\u2060];
-
-		"\x00" { w->start.u = 0; return; }
-		@w0 letter+ @w1 { w->start.u = w0; w->end.u = w1; return; }
-		* { continue; } */
-	}
-}
-
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -51,8 +25,8 @@ int main(void) {
 	TEST("one.two", 2)
 	TEST("one_two", 1)
 	TEST("one—two", 2)
-	TEST("(1-1i)", 2)
-	TEST("0.0 a.b", 4)
+	TEST("(1-1i)", 1) /* "(" Number number letter ")". */
+	TEST("0.0 a.b", 3) /* Number " " word "." word. */
 	TEST("fi f‌iii", 2) /* U+200C zwnj is in the second. */
 	TEST("manœuver…æroplane non-joinerfif‌‌itt‌‌tt good?", 5) /* 4 zwnj. */
 	TEST("100,000_000$", 2) /* Number "," number. */
