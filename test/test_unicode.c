@@ -10,7 +10,7 @@ int main(void) {
 	struct unicode_deque info = unicode_load();
 	if(!info.back) goto catch;
 	/* 6MB
-	unicode_deque_graph_fn(&info, "unicode.gv"); */
+	unicode_deque_graph_fn(&info, "graph/unicode.gv"); */
 	for(struct unicode_deque_cursor cur = unicode_deque_begin(&info);
 		unicode_deque_exists(&cur); unicode_deque_next(&cur)) {
 		const struct unicode *const x = unicode_deque_entry(&cur);
