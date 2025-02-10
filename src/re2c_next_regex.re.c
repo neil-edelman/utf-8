@@ -1,14 +1,14 @@
 // re2c $INPUT -o $OUTPUT -8 (utf-8) -i --case-ranges (gnu extension very compressed code file) [--encoding-policy substitute --input-encoding utf8]
+// re2c src/re2c_next_delimit.re.c -o build/re2c_next_delimit.c -8 --case-ranges --input-encoding utf8 -i
+#include "../src/re2c_next_regex.h"
 #include <assert.h>
 #include <stdint.h>
 
-#include "delimit.h"
-
 /*!include:re2c "unicode_categories.re" */
 
-/** To begin, `w` end must be set to the string. */
-void re2c_regex_next_delimit(struct delimit *const w) {
-	const uint8_t *YYCURSOR = w->end.u, *YYMARKER, *yyt1 = 0, *w0, *w1;
+/** To begin, `delimit` end must be set to the string. */
+void re2c_regex_next_delimit(struct delimit *const delimit) {
+	const uint8_t *YYCURSOR = delimit->end.u, *YYMARKER, *yyt1 = 0, *w0, *w1;
 	for( ; ; ) {
 		/*!re2c
 		re2c:define:YYCTYPE = 'uint8_t';
@@ -41,8 +41,8 @@ void re2c_regex_next_delimit(struct delimit *const w) {
 		word     = word_begin (word_mid* word_end)?;
 		word_like = (word | number)+;
 
-		"\x00" { w->start.u = 0; return; }
-		@w0 word_like @w1 { w->start.u = w0; w->end.u = w1; return; }
+		"\x00" { delimit->start.u = 0; return; }
+		@w0 word_like @w1 { delimit->start.u = w0; delimit->end.u = w1; return; }
 		* { continue; } */
 	}
 }

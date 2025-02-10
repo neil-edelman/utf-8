@@ -6,7 +6,7 @@
 
 /*!include:re2c "unicode_categories.re" */
 
-/** To begin, `w` end must be set to the string. */
+/** To begin, `delimit` end must be set to the string. */
 void re2c_next_delimit(struct delimit *const delimit) {
 	const uint8_t *YYCURSOR = delimit->end.u, *YYMARKER, *yyt1 = 0, *w0, *w1;
 	for( ; ; ) {
