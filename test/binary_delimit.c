@@ -7,7 +7,7 @@
 
 int main(void) {
 	int ret_code = EXIT_FAILURE;
-	char buffer[8192];
+	char buffer[5/*8192*/];
 	/* "ab  c" 3: 1 :[ */
 
 	struct delimit delimit;
@@ -15,9 +15,9 @@ int main(void) {
 	int on_edge = 0;
 	errno = 0;
 
-	freopen("UnicodeData.txt", "r", stdin);
+	//freopen("UnicodeData.txt", "r", stdin);
 	// 5—387915, 8192—390032. :[ 3—390032, 5—390032, 8192—390032. :]
-	// fixme: It's still chopping up code-points.
+	// fixme: It's still chopping up code-points. Need failing test.
 
 	// what we need is a model that says exactly how all the bytes behave.
 
@@ -63,6 +63,7 @@ int main(void) {
 	// 2097151 instead of…
 	// 2164910 (https://stackoverflow.com/q/15668718/2472827)
 
+	// "𝍠 𝍡 𝍢 𝍣 𝍤" 5. buffer[5]: 2.
 	while(read = fread(buffer, 1, sizeof buffer - 1, stdin)) {
 		buffer[read] = '\0';
 		//printf("Read: \"%s\".\n", buffer);
