@@ -40,20 +40,28 @@ int main(void) {
 
 	// we don't worry about splitting errors up; they are still errors
 
-	// so for a random +2 byte
+	// so for the end -2 byte, we (might) be in the middle of a valid
+	// code-point,
+	//                   /110-----
+	//                   /1110----
+	//                   /11110---
+	//          /1110---- 10------
+	//          /11110--- 10------
+	// /11110--- 10------ 10------
+	// all others are we can set it to the end
 	//                    0-------/
 	//           110----- 10------/
-	//                   /110-----
 	//  1110---- 10------ 10------/
-	//          /1110---- 10------
-	//                   /1110----
-	//  10------ 10------ 10------/ (error or 4-bytes)
-	// /11110--- 10------ 10------
-	//          /11110--- 10------
-	//                   /11110---
-	//                    11111---/ (error gets cut)
-	//           ******** 10------/ (otherwise error gets cut)
 	//  ******** 10------ 10------/ (otherwise error gets cut)
+	//           ******** 10------/ (otherwise error gets cut)
+	//  10------ 10------ 10------/ (error or 4-bytes)
+	//                    11111---/ (error gets cut)
+
+	// 127
+	// 2047
+	// 65535
+	// 2097151 instead of…
+	// 2164910 (https://stackoverflow.com/q/15668718/2472827)
 
 	while(read = fread(buffer, 1, sizeof buffer - 1, stdin)) {
 		buffer[read] = '\0';
