@@ -40,21 +40,20 @@ int main(void) {
 
 	// we don't worry about splitting errors up; they are still errors
 
-	// so for a random +3 byte
-	//                            0-------/
-	//                   110----- 10------/
-	//                           /110-----
-	//          1110---- 10------ 10------/
-	//                  /1110---- 10------
-	//                           /1110----
-	// 11110--- 10------ 10------ 10------/ (error or 4-bytes)
-	//         /11110--- 10------ 10------
-	//                  /11110--- 10------
-	//                           /11110---
-	//                            11111---/ (error gets cut)
-	//                   ******** 10------/ (otherwise error gets cut)
-	//          ******** 10------ 10------/ (otherwise error gets cut)
-	// ******** 10------ 10------ 10------/ (otherwise error gets cut)
+	// so for a random +2 byte
+	//                    0-------/
+	//           110----- 10------/
+	//                   /110-----
+	//  1110---- 10------ 10------/
+	//          /1110---- 10------
+	//                   /1110----
+	//  10------ 10------ 10------/ (error or 4-bytes)
+	// /11110--- 10------ 10------
+	//          /11110--- 10------
+	//                   /11110---
+	//                    11111---/ (error gets cut)
+	//           ******** 10------/ (otherwise error gets cut)
+	//  ******** 10------ 10------/ (otherwise error gets cut)
 
 	while(read = fread(buffer, 1, sizeof buffer - 1, stdin)) {
 		buffer[read] = '\0';
