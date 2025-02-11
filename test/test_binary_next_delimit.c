@@ -1,3 +1,4 @@
+#include "test_sentences.h"
 #include "../src/delimit.h"
 #include "../src/binary_next_delimit.h"
 #include <stdio.h>

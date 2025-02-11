@@ -23,9 +23,12 @@ static const unsigned tab = 4, wrap = 76;
  applicable to inverse-range-queries. (Nice try, tough.) */
 static const char *unicode_key(/*const<-it is not, technically :( */ struct unicode *const*const u)
 	{ return (*u)->utf8; }
+static void unicode_to_string(struct unicode *const u, char (*const a)[12]) {
+	sprintf(*a, "U+%x", u->unicode);
+}
 #define TRIE_NAME unicode
 #define TRIE_ENTRY struct unicode *
-#define TRIE_KEY_TO_STRING
+#define TRIE_TO_STRING
 #include "../src/trie.h"
 
 static void print_byte(const struct unicode_trie *const unicode) {
@@ -96,7 +99,7 @@ int main(void) {
 	/* Output tries. */
 	for(unsigned i = 0; i < 4; i++) {
 		char trie_name[32];
-		sprintf(trie_name, "graph/trie-%u-byte.gv", i + 1);
+		sprintf(trie_name, "graph/edges-%u-byte.gv", i + 1);
 		unicode_trie_graph_all(&bytes[i].trie, trie_name, 0);
 	}
 
