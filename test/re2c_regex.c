@@ -1,52 +1,6 @@
-/** Word-count in utf-8.
-
- Is this model of utf-8 self-consistent and complete?
-
- For the code-point U+uvwxyz, <https://en.wikipedia.org/wiki/UTF-8>. These
- are consumed. Errors are groups of bytes that are well-defined by going
- back up to 3 places.
-
- "11111---" Error.
- "11110uvv" "10vvwwww" "10xxxxyy" "10yyzzzz" 4-byte,
- "11110---" "10------" "10------"            otherwise error,
- "11110---" "10------"                       otherwise error,
- "11110---"                                  otherwise error.
- "1110wwww" "10xxxxyy" "10yyzzzz" 3-byte,
- "1110----" "10------"            otherwise error,
- "1110----"                       otherwise error.
- "110xxxyy" "10yyxxxx" 2-byte,
- "110-----"            otherwise error.
- "10------" Continuation-byte not in the context of the above is in error.
- "0yyyzzzz" 1-byte, (with checks for nul-termination if applicable.)
-
- How to parse these errors as is surrogates and over-long encodings is up
- to the application. Utf-8 pays careful attention to preserving the order
- of unicode, therefore we have side-stepped the issue by working directly
- in utf-8-space—don't apply a narrowing conversion to unicode; it is
- unicode-agnostic?  In a binary search method, the tables are alternating
- is in this class or not. Erroneous indices, therefore, pick up the
- surrounding properties. In this case, it likely considers them among the
- class of not-words (code-points that can be in words are generally grouped
- together in a block?)—an error in a word would split it in two.
-
- Chunking a file in blocks (>= 4 bytes) might create truncated code-points.
- So for seeking to the end-byte, we (might) be in the middle of a valid
- code-point. We keep an auxiliary 3-byte buffer to (possibly) complete the
- code-point next time around. Using the above scheme, we backtrack the
- following.
-
-				   110-----
-				   1110----
-				   11110---
-		  1110---- 10------
-		  11110--- 10------
- 11110--- 10------ 10------
-
- All others are complete or errors, so they can be cut on the division. */
-
 #include "test_sentences.h"
 #include "../src/delimit.h"
-#include "../src/binary_next_delimit.h"
+#include "../src/re2c_next_regex.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -57,17 +11,12 @@ int main(void) {
 	int ret_code = EXIT_FAILURE;
 	errno = 0;
 
-	/* "ab  c" 2. buffer[3]: 1. Fixed. */
-	/* "𝍠 𝍡 𝍢 𝍣 𝍤" 5. buffer[5]: 2. Fixed. */
-
 //#define SHOW
 	freopen("UnicodeData.txt", "r", stdin);
-	/* wc 161479, [5] 390032, [32768] 390032.
-	 `wc` delimits words by `isspace`, so the first line,
-	 "0000;<control>;Cc;0;BN;;;;;N;NULL;;;;" `wc` would say 1. `binary_delimit`
-	 uses "[\p{L}\p{M}\p{N}\p{Pc}\u200b\u200c\u200d\u2060]+", which parses that,
-	 "0000  control  Cc 0 BN     N NULL    ", would say 7.
-	 Count 390032. */
+	/* This technically doesn't work. It requires state to save and restore
+	 when you're refilling the buffer. That's a different design. But it's very
+	 close, and only really matters when one refils the buffer.
+	 Count 382048. */
 
 	struct {
 		size_t read, want, end;
@@ -150,14 +99,14 @@ int main(void) {
 		buffer.utf8[buffer.end -= buffer.assist_size].c = '\0';
 
 		for(find.delimit.end.c = &buffer.utf8[0].c;
-			binary_next_delimit(&find.delimit), find.delimit.start.c; ) {
+			re2c_next_regex(&find.delimit), find.delimit.start.c; ) {
 			if(!find.on_edge); else {
 				find.on_edge = 0;
 				if(find.delimit.start.c == &buffer.utf8[0].c) {
 #ifdef SHOW
 					printf("…continuing \"%.*s\"\n", (int)(find.delimit.end.c - find.delimit.start.c), find.delimit.start.c);
 #endif
-					continue; /* `for`, not `while`. */
+					continue;
 				}
 			}
 			find.count++;
@@ -175,11 +124,3 @@ int main(void) {
 	printf("Count %zu.\n", find.count);
 	return ret_code;
 }
-
-/*printf("want %zu. read %zu. buffer \"%s\". assist",
-	buffer.want, buffer.read, &buffer.utf8[0].c);
-for(size_t i = 0; i < buffer.assist_size; i++) {
-	uint8_t b = buffer.assist[i].u;
-	printf(" %.2"PRIx8, b);
-}
-printf(".\n");*/
