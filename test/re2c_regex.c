@@ -12,7 +12,7 @@ int main(void) {
 	errno = 0;
 
 //#define SHOW
-	freopen("UnicodeData.txt", "r", stdin);
+	//freopen("UnicodeData.txt", "r", stdin);
 	/* This technically doesn't work. It requires state to save and restore
 	 when you're refilling the buffer. That's a different design. But it's very
 	 close, and only really matters when one refils the buffer.

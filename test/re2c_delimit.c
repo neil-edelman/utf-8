@@ -12,7 +12,7 @@ int main(void) {
 	errno = 0;
 
 //#define SHOW
-	freopen("UnicodeData.txt", "r", stdin);
+	//freopen("UnicodeData.txt", "r", stdin);
 	/* Count 390032. */
 
 	struct {

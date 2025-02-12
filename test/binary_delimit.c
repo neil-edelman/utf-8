@@ -61,7 +61,7 @@ int main(void) {
 	/* "𝍠 𝍡 𝍢 𝍣 𝍤" 5. buffer[5]: 2. Fixed. */
 
 //#define SHOW
-	freopen("UnicodeData.txt", "r", stdin);
+	//freopen("UnicodeData.txt", "r", stdin);
 	/* wc 161479, [5] 390032, [32768] 390032.
 	 `wc` delimits words by `isspace`, so the first line,
 	 "0000;<control>;Cc;0;BN;;;;;N;NULL;;;;" `wc` would say 1. `binary_delimit`
