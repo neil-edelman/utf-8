@@ -4,16 +4,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
+#include <inttypes.h>
 
 int main(void) {
 	int ret_code = EXIT_FAILURE;
-	char buffer[5/*8192*/];
-	/* "ab  c" 3: 1 :[ */
-
-	struct delimit delimit;
-	size_t count = 0, read;
-	int on_edge = 0;
 	errno = 0;
+
+	/* "ab  c" 2. buffer[3]: 1. Fixed. */
+	/* "𝍠 𝍡 𝍢 𝍣 𝍤" 5. buffer[5]: 2. */
 
 	//freopen("UnicodeData.txt", "r", stdin);
 	// 5—387915, 8192—390032. :[ 3—390032, 5—390032, 8192—390032. :]
@@ -63,32 +62,114 @@ int main(void) {
 	// 2097151 instead of…
 	// 2164910 (https://stackoverflow.com/q/15668718/2472827)
 
-	// "𝍠 𝍡 𝍢 𝍣 𝍤" 5. buffer[5]: 2.
-	while(read = fread(buffer, 1, sizeof buffer - 1, stdin)) {
-		buffer[read] = '\0';
-		//printf("Read: \"%s\".\n", buffer);
-		for(delimit.end.c = buffer;
-			binary_next_delimit(&delimit), delimit.start.c; ) {
-			if(!on_edge); else {
-				on_edge = 0;
-				if(delimit.start.c == buffer) {
-					/* fixme: May get split mid-code-point! this can not do.
-					 Maybe back-track, put the nul, and keep… a little bit of
-					 wiggle room on either side? */
-					printf("…continuing \"%.*s\"\n", (int)(delimit.end.c - delimit.start.c), delimit.start.c);
-					continue;
+	struct {
+		size_t read, want, end;
+		enum { ZERO, ONE, TWO, THREE } assist_size;
+		/* Pieces code-point from end; `start`-terminated. `nul`-terminated. */
+		union { char c; uint8_t u; } assist[3], utf8[5/*8192*/];
+	} buffer;
+	buffer.assist_size = ZERO;
+	assert(sizeof buffer.assist >= 3 && sizeof buffer.utf8 > 4);
+
+	struct {
+		struct delimit delimit;
+		size_t count;
+		int on_edge;
+	} find = {0};
+
+	/* Re-fill the buffer with a utf-8 source. */
+	while(buffer.read = fread(buffer.utf8 + buffer.assist_size, 1,
+		buffer.want = sizeof buffer.utf8 - 1 - buffer.assist_size, stdin)) {
+		assert(buffer.read <= buffer.want
+			&& buffer.assist_size + buffer.read <= sizeof buffer.utf8 - 1);
+
+		/* Copy code-point leftovers from last time. */
+		switch(buffer.assist_size) {
+		case THREE: buffer.utf8[2].c = buffer.assist[2].c; /* Fall… */
+		case TWO:   buffer.utf8[1].c = buffer.assist[1].c; /* Fall… */
+		case ONE:   buffer.utf8[0].c = buffer.assist[0].c;
+		case ZERO:  break;
+		}
+		buffer.end = buffer.assist_size + buffer.read; /* So far, but… */
+		//assert(buffer.end >= 4);
+		buffer.assist_size = ZERO;
+
+		/* We might have truncated a code-point this time. */
+		if(buffer.read == buffer.want) {
+			uint8_t *u = &buffer.utf8[buffer.end - 1].u;
+			switch(*u & 0xc0) {
+			case 0x00:
+			case 0x40: break; /* 1-byte. */
+			case 0xc0:
+				/* "/110-----", "/1110----", "/11110---" */
+				if((*u & 0xf8) != 0xf8)
+					buffer.assist_size = ONE,
+					buffer.assist[0].u = u[0];
+				/* …otherwise error, "11111---/", cut anywhere. */
+				break;
+			case 0x80: /* "10------" continuation byte. */
+				u--;
+				switch(*u & 0xf8) {
+				case 0xf0: /* "/11110--- 10------" */
+				case 0xe0: /* "/1110---- 10------" */
+				case 0xe8:
+					buffer.assist_size = TWO;
+					buffer.assist[0].u = u[0];
+					buffer.assist[1].u = u[1];
+					break;
+				case 0x80: /* "10------ 10------" continuation byte. */
+				case 0x88:
+				case 0x90:
+				case 0x98:
+				case 0xa0:
+				case 0xa8:
+				case 0xb0:
+				case 0xb8:
+					u--;
+					/* /"11110---" "10------" "10------" */
+					if((*u & 0xf8) == 0xf0)
+						buffer.assist_size = THREE,
+						buffer.assist[0].u = u[0],
+						buffer.assist[1].u = u[1],
+						buffer.assist[2].u = u[2];
+					/* …otherwise error. */
+					break;
+				default: break;
+				}
+				/* …otherwise error. */
+				break;
+			}
+		}
+		/* `nul`-terminate the rest. */
+		buffer.utf8[buffer.end -= buffer.assist_size].c = '\0';
+
+		printf("want %zu. read %zu. buffer \"%s\". assist",
+			buffer.want, buffer.read, &buffer.utf8[0].c);
+		for(size_t i = 0; i < buffer.assist_size; i++) {
+			uint8_t b = buffer.assist[i].u;
+			printf(" %.2"PRIx8, b);
+		}
+		printf(".\n");
+
+		for(find.delimit.end.c = &buffer.utf8[0].c;
+			binary_next_delimit(&find.delimit), find.delimit.start.c; ) {
+			if(!find.on_edge); else {
+				find.on_edge = 0;
+				if(find.delimit.start.c == &buffer.utf8[0].c) {
+					printf("…continuing \"%.*s\"\n", (int)(find.delimit.end.c - find.delimit.start.c), find.delimit.start.c);
+					continue; /* `for`, not `while`. */
 				}
 			}
-			count++;
-			printf("\"%.*s\"—%zu\n", (int)(delimit.end.c - delimit.start.c), delimit.start.c, count);
+			find.count++;
+			printf("\"%.*s\"—%zu\n", (int)(find.delimit.end.c - find.delimit.start.c), find.delimit.start.c, find.count);
 		}
-		if(read < sizeof buffer - 1) break;
-		on_edge = (delimit.end.c == buffer + sizeof buffer - 1);
+		if(buffer.read < buffer.want) break; /* The last. */
+		find.on_edge = (find.delimit.end.c == &buffer.utf8[0].c + buffer.end);
 	}
 	if(ferror(stdin))
 		if(errno) perror("stdin"); else fprintf(stderr, "stdin: Error.\n");
 	else
 		ret_code = EXIT_SUCCESS;
-	printf("Count %zu.\n", count);
+	printf("Count %zu.\n", find.count);
 	return ret_code;
 }
