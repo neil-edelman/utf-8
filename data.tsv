@@ -1,0 +1,119 @@
+# real	user	sys (s)
+
+# 164K
+# time build/Products/Release/binary_delimit < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/merge.txt 
+# Count 43_798_727.
+3.278	3.223	0.051
+3.254	3.199	0.052
+3.255	3.198	0.053
+3.238	3.184	0.051
+
+3.2545	0.016
+
+# 196K
+# time build/Products/Release/re2c_delimit < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/merge.txt 
+# Count 43_798_727.
+1.724	1.547	0.054
+1.605	1.546	0.054
+1.607	1.548	0.054
+1.608	1.546	0.055
+
+1.636	0.059
+
+# 228K
+# time build/Products/Release/re2x_regex < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/merge.txt 
+#Count 43_765_397.
+1.893	1.839	0.051
+1.932	1.877	0.052
+1.910	1.856	0.052
+1.929	1.875	0.052
+
+1.916	0.018
+
+# 35K
+# time wc -w /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/merge.txt 
+# 41_470_177 /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/merge.txt
+2.027	1.976	0.049
+2.103	1.958	0.050
+2.145	1.957	0.051
+2.039	1.985	0.051
+2.032	1.981	0.049
+
+1.7672857	0.7596922
+
+# 168K
+# time separate/Build/Products/Release/separate < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/merge.txt 
+^C
+498.143	87.668	21.521
+# After 8' I got tired of waiting.
+
+# time separate/Build/Products/Release/separate < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/afri.txt 
+# Count 834_312
+4.671 2.216	0.509
+# Just the first text
+
+# time separate/Build/Products/Release/separate < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/merge.txt 
+#  [Restored 2025-02-12 at 15:52:51-08:00]
+# Wow, I really fucked up my computer. BSOD. So slow. Memory working overtime. 50' after…
+
+# time wc -w /Users/neil/Movies/utf-8/UnicodeData.txt 
+#  161_479 /Users/neil/Movies/utf-8/UnicodeData.txt
+0.080	0.014	0.006
+
+# time separate/Build/Products/Release/separate < /Users/neil/Movies/utf-8/UnicodeData.txt 
+# Count 390_032
+1.803	1.279	0.309
+
+# time build/Products/Release/binary_delimit < /Users/neil/Movies/utf-8/UnicodeData.txt 
+# Count 390_032.
+0.029	0.025	0.003
+
+# time build/Products/Release/re2c_delimit < /Users/neil/Movies/utf-8/UnicodeData.txt 
+# Count 390_032.
+0.018	0.015	0.003
+
+# time build/Products/Release/re2x_regex < /Users/neil/Movies/utf-8/UnicodeData.txt 
+# Count 382_048.
+0.022	0.018	0.003
+
+# Korean
+
+# time wc -w /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/korean.txt 
+#  562_732 /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/korean.txt
+0.047	0.043	0.004
+0.047	0.042	0.004
+0.045	0.040	0.004
+
+0.046333333	0.0011547005
+
+# time separate/Build/Products/Release/separate < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/korean.txt 
+# Count 498_095
+3.892	2.356	0.540
+3.525	2.241	0.486
+2.928	2.225	0.467
+
+3.4483333	0.48655147
+
+# time build/Products/Release/binary_delimit < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/korean.txt 
+# Count 498_095.
+0.051	0.046	0.004
+0.053	0.049	0.004
+0.050	0.046	0.003
+
+0.051333333	0.0015275252
+
+# time build/Products/Release/re2c_delimit < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/korean.txt 
+# Count 498_095.
+0.025	0.021	0.003
+0.026	0.022	0.003
+0.024	0.021	0.003
+
+0.025	0.001
+
+# time build/Products/Release/re2x_regex < /Users/neil/Movies/utf-8/all_bibles_plain_text_5.0/korean.txt 
+# Count 498_095.
+0.028	0.024	0.004
+0.027	0.023	0.003
+0.028	0.024	0.003
+
+0.027666667	0.00057735027

@@ -1,0 +1,7 @@
+# all_bibles_plain_text_5.0/korean.txt
+#pregramme	result	t	sample error
+"wc class\n562 732"	0.046333333	0.0011547005
+"swift class\n498 095"	3.4483333	0.48655147
+"binary class\n498 095"	0.051333333	0.0015275252
+"re2c class\n498 095"	0.025	0.001
+"re2c regex\n498 095"	0.027666667	0.00057735027

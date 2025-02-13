@@ -1,0 +1,6 @@
+#	s	sample error
+"wc class\n41 470 177"	1.7672857	0.7596922
+"swift class" 0 0
+"binary class\n43 798 727"	3.2545	0.016
+"re2c class\n43 798 727"	1.636	0.059
+"re2c regex\n43 765 397"	1.916	0.018
