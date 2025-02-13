@@ -53,6 +53,19 @@
 #include <assert.h>
 #include <inttypes.h>
 
+/*delete 132 okay
+ delete 143 okay
+ delete up to 145 okay
+ 148 is the culprit, Ì†Ä, <
+ delete up to 148 not
+ delete 153 not
+
+ U+d800. This is the surrogate block: U+d800–U+dfff. Specifically, d800–db7f, dc00–dfff. This is because the edge key is one-past the definition, which would have been U+d7ff.
+
+ `to_string` is not even used. We will fix that.
+ Fixed.
+*/
+
 int main(void) {
 	int ret_code = EXIT_FAILURE;
 	errno = 0;
