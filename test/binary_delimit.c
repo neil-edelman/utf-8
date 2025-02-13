@@ -3,10 +3,9 @@
  Is this model of utf-8 self-consistent and complete?
 
  For the code-point U+uvwxyz, <https://en.wikipedia.org/wiki/UTF-8>. These
- are consumed. Errors are groups of bytes that are well-defined by going
- back up to 3 places.
+ are consumed.
 
- "11111---" Error.
+ "11111---" Error (for now?)
  "11110uvv" "10vvwwww" "10xxxxyy" "10yyzzzz" 4-byte,
  "11110---" "10------" "10------"            otherwise error,
  "11110---" "10------"                       otherwise error,
@@ -19,15 +18,19 @@
  "10------" Continuation-byte not in the context of the above is in error.
  "0yyyzzzz" 1-byte, (with checks for nul-termination if applicable.)
 
- How to parse these errors as is surrogates and over-long encodings is up
- to the application. Utf-8 pays careful attention to preserving the order
- of unicode, therefore we have side-stepped the issue by working directly
- in utf-8-space—don't apply a narrowing conversion to unicode; it is
- unicode-agnostic?  In a binary search method, the tables are alternating
- is in this class or not. Erroneous indices, therefore, pick up the
- surrounding properties. In this case, it likely considers them among the
- class of not-words (code-points that can be in words are generally grouped
- together in a block?)—an error in a word would split it in two.
+ Errors are groups of bytes that are well-defined. How to parse these errors is
+ ultimately user-defined. A random continuation byte requires up to 3 back
+ reads to tell if it's an error. Surrogates, over-long encodings, and unicode
+ code-points that are not assigned (yet?) is further up to the application.
+
+ Utf-8 pays careful attention to preserving the order of unicode, therefore we
+ have side-stepped the issue by working directly in utf-8-space—don't apply a
+ narrowing conversion to unicode; it is unicode-agnostic?  In a binary search
+ method, the tables are alternating is in this class or not. Erroneous indices,
+ therefore, pick up the surrounding properties. In this case, it likely
+ considers them among the class of not-words (code-points that can be in words
+ are generally grouped together in a block?)—an error in a word would probably
+ split it in two.
 
  Chunking a file in blocks (>= 4 bytes) might create truncated code-points.
  So for seeking to the end-byte, we (might) be in the middle of a valid
@@ -35,14 +38,14 @@
  code-point next time around. Using the above scheme, we backtrack the
  following.
 
-				   110-----
-				   1110----
-				   11110---
-		  1110---- 10------
-		  11110--- 10------
+                   110-----
+                   1110----
+                   11110---
+          1110---- 10------
+          11110--- 10------
  11110--- 10------ 10------
 
- All others are complete or errors, so they can be cut on the division. */
+ All others are complete or errors, so they can be cut on the last byte. */
 
 #include "test_sentences.h"
 #include "../src/delimit.h"
