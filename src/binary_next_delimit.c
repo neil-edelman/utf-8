@@ -15,14 +15,13 @@
 
 void binary_next_delimit(struct delimit *const w) {
 	const char *cursor = w->end.c, *next;
+	/* Fixme: Checking for the nul-terminator is a waste. Inverting the
+	 delimiters is the wrong approach. We should have two classes, we're in and
+	 we're out, of which the compliment of the union is the set { 0x00 }.
+	 Stored in offset. At the end, `if(start == end) start = 0`. Would that be
+	 that much faster in practice? Doubtful. */
 	while(*cursor != '\0') {
-		/* While it's not a word.
-		 Fixme: Checking above and below for different things… probably is a
-		 source of inefficiency? Only in non-words. So this is inverted, so
-		 0x00 is included, so we must check on that. What if we flipped 0x01 in
-		 the table instead of inverting…? On null, the potential function would
-		 pass this, and then also pass the second is word, `start == end`.
-		 Would that really make that much of a difference? */
+		/* While it's not a word. */
 		if(!binary_is_delimit(cursor, &next))
 			{ cursor = next; continue; }
 		/* Now it's a word. */
