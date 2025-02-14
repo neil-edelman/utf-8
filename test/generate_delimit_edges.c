@@ -80,8 +80,10 @@ int main(void) {
 			|| u->unicode == 0x200d /* zwj */
 			|| u->unicode == 0x2060; /* wj */
 
-		/* Put it in trie if it's a rising-or-falling-edge. */
-		if(!(bytes[u->utf8_size].property ^ is_word)) continue;
+		/* Put it in trie if it's a rising-or-falling-edge. If using the
+		 nul-terminator, can _not_ have U+0000 (Cc) in the range. I think. */
+		if(u->unicode == 0x00
+			|| !(bytes[u->utf8_size].property ^ is_word)) continue;
 		bytes[u->utf8_size].property = is_word;
 		assert(u->utf8_size >= 1 && u->utf8_size <= 4);
 		switch(unicode_trie_add(&bytes[u->utf8_size - 1].trie, u->utf8, &put_data_here)) {
