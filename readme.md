@@ -12,7 +12,7 @@ The model of words being delimited by white-space—specifically the `isspace` s
 
 Wikipedia says that text-segmentation is "non-trivial." I looked up how to do this and every example was in Swift, so I wrote a a programme in Swift to compare with C. I initially was going to use a Patrica trie, but I wanted an upper-bound fixed binary-search. The Swift documentation seems to say that `[\w]` is `[\p{L}\p{Nd}]`, which is obviously an oversimplification. I settled for `[\w]` is `[\p{L}\p{M}\p{N}\u200b\u200c\u200d\u2060]`.
 
-Then I realized what I was doing and I began using <https://github.com/skvadrik/re2c>. Which I found conveniently updated to include Unicode category definitions in 2019; this made it trivial to have a richer regular-expression definition of a word. Very useful because, not only may graphemes be several code-points, but it allows the context of the code-point to be easily taken into account—the word context is limited to a regular language that can be recognized by a finite-state automaton, not a type-1 context-sensitive language.
+Then I realized that this would be the ideal use-case for [re2c](https://github.com/skvadrik/re2c). Which I found conveniently updated to include Unicode category definitions in 2019; this made it trivial to have a richer regular-expression definition of a word. Very useful because, not only may graphemes be several code-points, but it allows the context of the code-point to be easily taken into account—the word context is limited to a regular language that can be recognized by a finite-state automaton, not a type-1 context-sensitive language.
 
 # What one will need
 
