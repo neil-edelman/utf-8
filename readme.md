@@ -2,9 +2,19 @@
 
 All of them were compiled except `wc`, which I used my system's `wc`. I ran them though `time <programme> < input`. For `input`, I wanted to test multiple languages and a large book that's freely available: [List of literary works by number of translations](https://en.wikipedia.org/wiki/List_of_literary_works_by_number_of_translations). I downloaded at [Bible Super Search](https://www.biblesupersearch.com/bible-downloads/).
 
-<table>
-<tr><th>programme</th><th>model of word</th></tr>
-<tr><td>wc</td><td>[^ \f\n\r\t\v]*</td>
+<table><tr>
+	<th>programme</th>
+	<th>model of word</th>
+	<th>comments</th>
+</tr><tr>
+	<td>wc class</td>
+	<td>[^ \f\n\r\t\v]+</td>
+	<td>only ascii; super-successful; limited accuracy</td>
+</tr><tr>
+	<td>swift class</td>
+	<td>[\w]+</td>
+	<td>documentation appears to say that it's equivalent to [\p{W}\p{Nd}]+, but I know this is a simplification</td>
+</tr>
 </table>
 
 ![Korean Bible word count.](korean.svg)
