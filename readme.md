@@ -13,7 +13,19 @@ All of them were compiled except `wc`, which I used my system's `wc`. I ran them
 </tr><tr>
 	<td>swift class</td>
 	<td>[\w]+</td>
-	<td>documentation appears to say that it's equivalent to [\p{W}\p{Nd}]+, but I know this is a simplification</td>
+	<td>I don't know what \w is, documentation appears to say that it's equivalent to [\p{W}\p{Nd}]+, but I know this is a simplification</td>
+</tr><tr>
+	<td>binary class</td>
+	<td>[\p{L}\p{M}\p{N}\p{Pc}\u200b\u200c\u200d\u2060]+</td>
+	<td>this was the programme I came up with using upper-bound binary search</td>
+<tr><tr>
+	<td>re2c class</td>
+	<td>[\p{L}\p{M}\p{N}\p{Pc}\u200b\u200c\u200d\u2060]+</td>
+	<td>this was an equivalent with re2c's hard-coded perfect-hash table</td>
+</tr><tr>
+	<td>re2c regex</td>
+	<td>[((word_begin=(\p{L}\p{M}* | (\p{N}\[0-9])) (word_mid* word_end)?) | number=(binary|hex|integer|real|money))+]</td>
+	<td>see src/re2c_next_regex.re.c</td>
 </tr>
 </table>
 
