@@ -1,10 +1,10 @@
 # Results
 
-![korean.svg](Korean Bible word count.)
+![Korean Bible word count.](korean.svg)
 
-![all.svg](65 Bibles in different languages concatenated.)
+![65 Bibles in different languages concatenated.](all.svg)
 
-![filesizes.svg](Executable file size.)
+![Executable file size.](filesizes.svg)
 
 # What is this?
 
