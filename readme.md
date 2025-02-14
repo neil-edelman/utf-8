@@ -90,11 +90,11 @@ code-point. I keep an auxiliary 3-byte buffer to (possibly) complete the
 code-point next time around. Using the above scheme, store any of the following truncations in the back of the buffer for the next read.
 
 ```
-				  110-----
-				  1110----
-				  11110---
-		 1110---- 10------
-		 11110--- 10------
+                  110-----
+                  1110----
+                  11110---
+         1110---- 10------
+         11110--- 10------
 11110--- 10------ 10------
 ```
 
