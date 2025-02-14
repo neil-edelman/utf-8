@@ -18,7 +18,7 @@ All of them were compiled except `wc`, which I used my system's `wc`. I ran them
 	<td>binary class</td>
 	<td>[\p{L}\p{M}\p{N}\p{Pc}\u200b\u200c\u200d\u2060]+</td>
 	<td>this was the programme I came up with using upper-bound binary search</td>
-<tr><tr>
+</tr><tr>
 	<td>re2c class</td>
 	<td>[\p{L}\p{M}\p{N}\p{Pc}\u200b\u200c\u200d\u2060]+</td>
 	<td>this was an equivalent with re2c's hard-coded perfect-hash table</td>
