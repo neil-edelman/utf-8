@@ -1,10 +1,10 @@
 # Results
 
-[korean.svg](Korean Bible word count.)
+![korean.svg](Korean Bible word count.)
 
-[all.svg](65 Bibles in different languages concatenated.)
+![all.svg](65 Bibles in different languages concatenated.)
 
-[filesizes.svg](Executable file size.)
+![filesizes.svg](Executable file size.)
 
 # What is this?
 
@@ -20,7 +20,7 @@ Unicode data placed in the root of one's project. <https://www.unicode.org/Publi
 
 Every `.c` in `test/` generates a new executable. I should probably update the `Makefile` instead of explaining.
 
-<https://re2c.org/>. This generated file is large, but the gnu extension `--case-ranges` shortens this a lot.
+The [re2c](https://re2c.org/)-generated file is large, but the gnu extension `--case-ranges` shortens this a lot.
 
 `re2c [src/*.re.c test/*.re.c] -o build/[*.c] -8 --case-ranges --input-encoding utf8 -i`
 
