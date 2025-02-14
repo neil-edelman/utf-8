@@ -1,8 +1,19 @@
 # Results
 
+All of them were compiled except `wc`, which I used my system's `wc`. I ran them though `time <programme> < input`. For `input`, I wanted to test multiple languages and a large book that's freely available: [List of literary works by number of translations](https://en.wikipedia.org/wiki/List_of_literary_works_by_number_of_translations). I downloaded at [Bible Super Search](https://www.biblesupersearch.com/bible-downloads/).
+
+<table>
+<tr><th>programme</th><th>model of word</th></tr>
+<tr><td>wc</td><td>[^ \f\n\r\t\v]*</td>
+</table>
+
 ![Korean Bible word count.](korean.svg)
 
+The word counts agree
+
 ![65 Bibles in different languages concatenated.](all.svg)
+
+I concatenated all 65 versions of the Bible in different languages.
 
 ![Executable file size.](filesizes.svg)
 
@@ -76,5 +87,3 @@ Every `.c` in `test/` generates a new executable. I should probably update the `
 The [re2c](https://re2c.org/)-generated file is large, but the gnu extension `--case-ranges` shortens this a lot.
 
 `re2c [src/*.re.c test/*.re.c] -o build/[*.c] -8 --case-ranges --input-encoding utf8 -i`
-
-I wanted to test my code in multiple languages and a large book that's freely available. [List of literary works by number of translations](https://en.wikipedia.org/wiki/List_of_literary_works_by_number_of_translations) lists the Bible as by far number 1. I downloaded at [Bible Super Search](https://www.biblesupersearch.com/bible-downloads/) and concatenated all of them.
