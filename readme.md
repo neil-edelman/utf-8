@@ -1,7 +1,5 @@
 # Results
 
-All of them were compiled except `wc`, which I used my system's `wc`. I ran them though `time <programme> < input`. For `input`, I wanted to test multiple languages and a large book that's freely available: [List of literary works by number of translations](https://en.wikipedia.org/wiki/List_of_literary_works_by_number_of_translations). I downloaded at [Bible Super Search](https://www.biblesupersearch.com/bible-downloads/).
-
 <table><tr>
 	<th>programme</th>
 	<th>model of word</th>
@@ -29,15 +27,19 @@ All of them were compiled except `wc`, which I used my system's `wc`. I ran them
 </tr>
 </table>
 
+I used my system's `wc`. I ran them though `time <programme> < input`. For `input`, I wanted to test multiple languages and a large book that's freely available: [List of literary works by number of translations](https://en.wikipedia.org/wiki/List_of_literary_works_by_number_of_translations). I downloaded at [Bible Super Search](https://www.biblesupersearch.com/bible-downloads/).
+
 ![Korean Bible word count.](korean.svg)
 
-The word counts agree
+The word counts agree except `wc`. From what limited knowledge I have of Korean, I think this is not surprising. The `swift` programme is a lot slower; I would like to think that this is an inherent problem with the Swift language, but I'm forced to admit I have never seen Swift code before and it's possible that I don't know what I'm doing.
 
 ![65 Bibles in different languages concatenated.](all.svg)
 
-I concatenated all 65 versions of the Bible in different languages.
+I concatenated all 65 versions of the Bible in different languages. Disappointing for binary class. I would have been interested to see what word count the `swift` programme gave, but it spectacularly balked. The expanded regex only merges a few thousandth's of words together in this source. The `re2c` and `wc` have similar run-times.
 
 ![Executable file size.](filesizes.svg)
+
+It looks like `swift` and `binary` have the same algorithmic size. I would guess it uses a multi-stage hash-table. That's probably reading to much into it.
 
 # What is this?
 
