@@ -104,7 +104,8 @@ int main(void) {
 		buffer.utf8[buffer.end -= buffer.assist_size].c = '\0';
 
 		for(find.delimit.end.c = &buffer.utf8[0].c;
-			binary_next_delimit(&find.delimit), find.delimit.start.c; ) {
+			binary_next_delimit(&find.delimit),
+			find.delimit.start.c != find.delimit.end.c; ) {
 			if(!find.on_edge); else {
 				find.on_edge = 0;
 				if(find.delimit.start.c == &buffer.utf8[0].c) {
