@@ -11,6 +11,7 @@ int main(void) {
 		*t_end = t + sizeof sentences / sizeof *sentences;
 		t < t_end; t++) {
 		size_t count = 0;
+		/* Each word. */
 		for(delimit.end.c = t->sentence; ; ) {
 			binary_next_delimit(&delimit);
 			if(delimit.start.c == delimit.end.c) break;

@@ -94,7 +94,7 @@ static bool binary_is_not_delimit(const char *const string_in_utf8,
 		internal.u8[1] = byte;
 		byte = string.unchar[1];
 		if((byte & 0xc0) != 0x80)
-			return *output_next = string.unconst + 1, false;
+			return *output_next = string.unconst + 1, true;
 		internal.u8[0] = byte;
 		edge = u32_upper_bound(utf8_not_delimit_edges,
 			utf8_not_delimit_end[0], utf8_not_delimit_end[1], internal.u32);
@@ -103,11 +103,11 @@ static bool binary_is_not_delimit(const char *const string_in_utf8,
 		internal.u8[2] = byte;
 		byte = string.unchar[1];
 		if((byte & 0xc0) != 0x80)
-			return *output_next = string.unconst + 1, false;
+			return *output_next = string.unconst + 1, true;
 		internal.u8[1] = byte;
 		byte = string.unchar[2];
 		if((byte & 0xc0) != 0x80)
-			return *output_next = string.unconst + 2, false;
+			return *output_next = string.unconst + 2, true;
 		internal.u8[0] = byte;
 		edge = u32_upper_bound(utf8_not_delimit_edges,
 			utf8_not_delimit_end[1], utf8_not_delimit_end[2], internal.u32);
@@ -116,22 +116,22 @@ static bool binary_is_not_delimit(const char *const string_in_utf8,
 		internal.u8[3] = byte;
 		byte = string.unchar[1];
 		if((byte & 0xc0) != 0x80)
-			return *output_next = string.unconst + 1, false;
+			return *output_next = string.unconst + 1, true;
 		internal.u8[2] = byte;
 		byte = string.unchar[2];
 		if((byte & 0xc0) != 0x80)
-			return *output_next = string.unconst + 2, false;
+			return *output_next = string.unconst + 2, true;
 		internal.u8[1] = byte;
 		byte = string.unchar[3];
 		if((byte & 0xc0) != 0x80)
-			return *output_next = string.unconst + 3, false;
+			return *output_next = string.unconst + 3, true;
 		internal.u8[0] = byte;
 		edge = u32_upper_bound(utf8_not_delimit_edges,
 			utf8_not_delimit_end[2], utf8_not_delimit_end[3], internal.u32);
 		*output_next = string.unconst + 4;
 	} else {
 		/* Not normalized utf-8 (16.0.0 #44) character. Maybe… */
-		return *output_next = string.unconst + 1, false;
+		return *output_next = string.unconst + 1, true;
 	}
 	return edge & 1;
 }

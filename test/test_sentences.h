@@ -4,6 +4,7 @@ static const struct test {
 	const char *sentence;
 	size_t delimit_count_basic, delimit_count_regex;
 } sentences[] = {
+	{ "\x80\x80""a a", 2, 2 }, /* Proper handling of non-utf-8. */
 	{ "", 0, 0 },
 	{ " yo", 1, 1 },
 	{ " ,...,,,,.,., ~~~````` — ", 0, 0 },
