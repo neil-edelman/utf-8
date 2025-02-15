@@ -20,6 +20,12 @@ void binary_next_delimit(struct delimit *const w) {
 	 we're out, of which the compliment of the union is the set { 0x00 }.
 	 Stored in offset. At the end, `if(start == end) start = 0`. Would that be
 	 that much faster in practice? Doubtful. */
+	while(binary_is_not_delimit(cursor, &next)) cursor = next;
+	w->start.c = cursor;
+	while(binary_is_delimit(cursor, &next)) cursor = next;
+	w->end.c = cursor;
+
+#if 0
 	while(*cursor != '\0') {
 		/* While it's not a word. */
 		if(!binary_is_delimit(cursor, &next))
@@ -31,4 +37,5 @@ void binary_next_delimit(struct delimit *const w) {
 		return;
 	}
 	w->start.c = 0;
+#endif
 }

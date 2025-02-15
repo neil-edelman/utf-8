@@ -35,6 +35,31 @@ int main(void) {
 		assert(next == u->utf8 + u->utf8_size);
 	}
 
+	/* All unicode characters inverted. */
+	for(struct unicode_deque_cursor i = unicode_deque_begin(&info);
+		unicode_deque_exists(&i); unicode_deque_next(&i)) {
+		const struct unicode *const u = unicode_deque_entry(&i);
+		const char *next;
+		/* fixme: Shouldn't be pasting stuff. */
+		bool is_from_catalog = u->category == Ll || u->category == Lu
+			|| u->category == Lt || u->category == Lm || u->category == Lo
+			|| u->category == Mc || u->category == Me || u->category == Mn
+			|| u->category == Nd || u->category == Nl || u->category == No
+			|| u->category == Pc
+			|| u->unicode == 0x200b /* zwsp */
+			|| u->unicode == 0x200c /* zwnj */
+			|| u->unicode == 0x200d /* zwj */
+			|| u->unicode == 0x2060 /* wj */
+			|| u->unicode == 0x0000 /* This is the one difference. */,
+			is_from_word = binary_is_not_delimit(u->utf8, &next);
+		is_from_catalog = !is_from_catalog;
+		printf("U+%"PRIx32":0x%"PRIx32": ~%s (%s).\n",
+			u->unicode, u->internal.uint, is_from_word ? "yes" : "no",
+			is_from_catalog ? "yes" : "no");
+		assert(is_from_word == is_from_catalog);
+		assert(next == u->utf8 + u->utf8_size);
+	}
+
 	retval = EXIT_SUCCESS;
 	goto finally;
 catch:

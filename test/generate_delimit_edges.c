@@ -83,7 +83,10 @@ int main(void) {
 		/* Put it in trie if it's a rising-or-falling-edge. If using the
 		 nul-terminator, can _not_ have U+0000 (Cc) in the range. I think. */
 		if(u->unicode == 0x00
-			|| !(bytes[u->utf8_size].property ^ is_word)) continue;
+			/* For inversion. fixme: Messes up if one has U+0001, as well; need
+			 to invert it twice. */
+			|| u->unicode != 0x01
+			&& !(bytes[u->utf8_size].property ^ is_word)) continue;
 		bytes[u->utf8_size].property = is_word;
 		assert(u->utf8_size >= 1 && u->utf8_size <= 4);
 		switch(unicode_trie_add(&bytes[u->utf8_size - 1].trie, u->utf8, &put_data_here)) {
@@ -107,7 +110,7 @@ int main(void) {
 
 	/* Output the programme. */
 	printf("#include <stdint.h>\n\n"
-		"static const uint32_t utf8_delimit_edges[] = {\n"
+		"static const uint32_t utf8_not_delimit_edges[] = {\n"
 		"\t/* %"PRIu32" code-points. */\n", bytes[0].size);
 	print_byte(&bytes[0].trie);
 	printf(",\n"
@@ -120,11 +123,17 @@ int main(void) {
 		"\t/* %"PRIu32" code-points. */\n", bytes[3].size);
 	print_byte(&bytes[3].trie);
 	printf("\n"
-		"};\n");
+		"}, *const utf8_delimit_edges = utf8_not_delimit_edges + 1;\n");
 
 	uint32_t running = 0;
 	bool first = true;
-	printf("static const size_t utf8_delimit_end[] = { ");
+	printf("static const size_t utf8_not_delimit_end[] = { ");
+	for(unsigned i = 0; i < 4; i++)
+		printf("%s%"PRIu32"", first ? "" : ", ", running += bytes[i].size),
+		first = false;
+	printf(" },\n");
+	running = UINT32_MAX, first = true;
+	printf("\tutf8_delimit_end[] = { ");
 	for(unsigned i = 0; i < 4; i++)
 		printf("%s%"PRIu32"", first ? "" : ", ", running += bytes[i].size),
 		first = false;
