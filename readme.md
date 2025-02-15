@@ -37,7 +37,9 @@ The word counts agree except `wc`. From what limited knowledge I have of Korean,
 
 I concatenated all 65 versions of the Bible in different languages. I would have been interested to see what word count the `swift` programme gave, but it spectacularly balked. The expanded regex only merges a few thousandth's of words together in this source. The `re2c` and `wc` have similar run-times.
 
-The `re2c` strategy of breaking a code-point up into bytes causes a huge amount of state fragmentation. On the other hand, I think of `binary` as being `O(log n)`, but with a fixed and small `n`, I was curious to see whether taking in whole code-points and doing a binary search would be that much slower. It's about twice as slow, in this case. I didn't do any obvious optimizations, but it's quite clear that `re2c` is going to be hard to beat.
+The `re2c` strategy of breaking a code-point up into bytes causes a huge amount of state fragmentation. On the other hand, I think of `binary` as being `O(log n)`, but with a fixed and small `n`, I was curious to see whether taking in whole code-points and doing a binary search would be that much slower. It's about twice as slow, in this case.
+
+There are two `binary` entries. The first one was with the superfluous check for zero every non-word because I lazyly inverted it. The second is optimized with a table for each and no check for nul. It made very little difference.
 
 ![Executable file size.](filesizes.svg)
 

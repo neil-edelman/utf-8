@@ -202,7 +202,7 @@
 		<text><tspan font-family="modern" >binary class</tspan></text>
 	</g>
 	<g transform="translate(377.39,271.31) rotate(270)" stroke="none" fill="black" font-family="modern" font-size="14.00"  text-anchor="end">
-		<text><tspan font-family="modern" >43 797 002</tspan></text>
+		<text><tspan font-family="modern" >43 798 727</tspan></text>
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
@@ -282,9 +282,9 @@
 		<polygon fill = 'rgb( 79, 166, 220)' fill-opacity = '0.300000' points = '269.77,251.02 316.06,251.02 316.06,37.13 269.77,37.13 '/>
 	</g>
 	<path stroke='rgb( 79, 166, 220)'  d='M269.77,251.02 L269.77,37.14 L316.05,37.14 L316.05,251.02 L269.77,251.02 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb( 79, 166, 220)' fill-opacity = '0.300000' points = '339.20,251.02 385.49,251.02 385.49,59.84 339.20,59.84 '/>
+		<polygon fill = 'rgb( 79, 166, 220)' fill-opacity = '0.300000' points = '339.20,251.02 385.49,251.02 385.49,39.70 339.20,39.70 '/>
 	</g>
-	<path stroke='rgb( 79, 166, 220)'  d='M339.20,251.02 L339.20,59.85 L385.48,59.85 L385.48,251.02 L339.20,251.02 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
+	<path stroke='rgb( 79, 166, 220)'  d='M339.20,251.02 L339.20,39.71 L385.48,39.71 L385.48,251.02 L339.20,251.02 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
 		<polygon fill = 'rgb( 79, 166, 220)' fill-opacity = '0.300000' points = '408.62,251.02 454.92,251.02 454.92,143.50 408.62,143.50 '/>
 	</g>
 	<path stroke='rgb( 79, 166, 220)'  d='M408.62,251.02 L408.62,143.51 L454.91,143.51 L454.91,251.02 L408.62,251.02 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
@@ -296,7 +296,7 @@
 <g fill="none" color="black" stroke="rgb( 79, 166, 220)" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<path stroke='rgb( 79, 166, 220)'  d='M154.06,184.80 L154.06,84.95 M148.81,184.80 L159.31,184.80 M148.81,84.95 L159.31,84.95 M223.48,251.02 M218.23,251.02
 		L228.73,251.02 M218.23,251.02 L228.73,251.02 M292.91,38.20 L292.91,36.09 M287.66,38.20 L298.16,38.20 M287.66,36.09
-		L298.16,36.09 M362.34,61.07 L362.34,58.63 M357.09,61.07 L367.59,61.07 M357.09,58.63 L367.59,58.63 M431.77,147.38
+		L298.16,36.09 M362.34,40.67 L362.34,38.75 M357.09,40.67 L367.59,40.67 M357.09,38.75 L367.59,38.75 M431.77,147.38
 		L431.77,139.63 M426.52,147.38 L437.02,147.38 M426.52,139.63 L437.02,139.63 M501.19,126.29 L501.19,123.92 M495.94,126.29
 		L506.44,126.29 M495.94,123.92 L506.44,123.92  '/></g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
