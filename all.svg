@@ -5,7 +5,7 @@
  xmlns:xlink="http://www.w3.org/1999/xlink"
 >
 
-<title>Gnuplot</title>
+<title>all_timing_combined</title>
 <desc>Produced by GNUPLOT 5.4 patchlevel 4 </desc>
 
 <g id="gnuplot_canvas">
@@ -238,7 +238,7 @@
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 </g>
-	<g id="gnuplot_plot_1" ><title>all bibles plain text 5.0\n65 combined\ntranslations\n302MB</title>
+	<g id="all_timing_combined_plot_1" ><title>all bibles plain text 5.0\n65 combined\ntranslations\n302MB</title>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<g transform="translate(501.38,24.28)" stroke="none" fill="black" font-family="modern" font-size="14.00"  text-anchor="end">
 		<text><tspan font-family="modern" >all bibles plain text 5.0</tspan></text>

@@ -15,6 +15,6 @@ set terminal pngcairo enhanced font "modern,14" fontscale 1.0 size 600, 400
 set output "all.png"
 plot "all.tsv" using 2:3:xticlabels(1) linecolor rgb ilrblue title "all bibles plain text 5.0\n65 combined\ntranslations\n302MB"
 
-set terminal svg size 600, 400 dynamic font "modern,14" enhanced fontscale 1.0 #mouse standalone
+set terminal svg size 600, 400 dynamic font "modern,14" enhanced fontscale 1.0 name "all_timing_combined" #mouse standalone
 set output "all.svg"
 replot
