@@ -14,7 +14,7 @@ int main(void) {
 		/* Each word. */
 		for(delimit.end.c = t->sentence; ; ) {
 			binary_next_delimit(&delimit);
-			if(delimit.start.c == delimit.end.c) break;
+			if(!delimit.start.c) break;
 			printf("\"%.*s\"\n", (int)(delimit.end.c - delimit.start.c), delimit.start.c);
 			count++;
 		}

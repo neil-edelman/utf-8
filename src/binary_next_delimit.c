@@ -13,17 +13,21 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+/** If it's at the end, then start is 0 and end is not changed.
+ What if end is uninitialized? It must be initialized. */
 void binary_next_delimit(struct delimit *const w) {
 	const char *cursor = w->end.c, *next;
 	/* Fixme: Checking for the nul-terminator is a waste. Inverting the
 	 delimiters is the wrong approach. We should have two classes, we're in and
 	 we're out, of which the compliment of the union is the set { 0x00 }.
 	 Stored in offset. At the end, `if(start == end) start = 0`. Would that be
-	 that much faster in practice? Doubtful. */
+	 that much faster in practice? Doubtful.
+	 This is what it does now! */
 	while(binary_is_not_delimit(cursor, &next)) cursor = next;
 	w->start.c = cursor;
 	while(binary_is_delimit(cursor, &next)) cursor = next;
-	w->end.c = cursor;
+	if(w->start.c != cursor) w->end.c = cursor;
+	else w->start.c = 0;
 
 #if 0
 	while(*cursor != '\0') {

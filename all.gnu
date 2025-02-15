@@ -1,4 +1,4 @@
-set key at 5.0,3.2
+set key at 6.0,3.0
 set grid
 set style data histogram
 set style histogram errorbars

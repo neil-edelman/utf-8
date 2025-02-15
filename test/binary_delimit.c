@@ -14,7 +14,7 @@ int main(void) {
 	/* "ab  c" 2. buffer[3]: 1. Fixed. */
 	/* "𝍠 𝍡 𝍢 𝍣 𝍤" 5. buffer[5]: 2. Fixed. */
 
-//#define SHOW
+#define SHOW
 	//freopen("UnicodeData.txt", "r", stdin);
 	/* wc 161479, [5] 390032, [32768] 390032.
 	 `wc` delimits words by `isspace`, so the first line,
@@ -27,7 +27,7 @@ int main(void) {
 		size_t read, want, end;
 		enum { ZERO, ONE, TWO, THREE } assist_size;
 		/* Pieces of code-point from end; size-terminated. `nul`-terminated. */
-		union { char c; uint8_t u; } assist[3], utf8[/*5*//*8192*/32768];
+		union { char c; uint8_t u; } assist[3], utf8[5/*8192*//*32768*/];
 	} buffer;
 	buffer.assist_size = ZERO;
 	assert(sizeof buffer.assist >= 3 && sizeof buffer.utf8 > 4);
@@ -104,8 +104,7 @@ int main(void) {
 		buffer.utf8[buffer.end -= buffer.assist_size].c = '\0';
 
 		for(find.delimit.end.c = &buffer.utf8[0].c;
-			binary_next_delimit(&find.delimit),
-			find.delimit.start.c != find.delimit.end.c; ) {
+			binary_next_delimit(&find.delimit), find.delimit.start.c; ) {
 			if(!find.on_edge); else {
 				find.on_edge = 0;
 				if(find.delimit.start.c == &buffer.utf8[0].c) {
@@ -122,6 +121,7 @@ int main(void) {
 		}
 		if(buffer.read < buffer.want) break; /* The last. */
 		find.on_edge = (find.delimit.end.c == &buffer.utf8[0].c + buffer.end);
+		fprintf(stderr, "[reached the end of the buffer; on_edge %d]\n", find.on_edge);
 	}
 	if(ferror(stdin))
 		if(errno) perror("stdin"); else fprintf(stderr, "stdin: Error.\n");

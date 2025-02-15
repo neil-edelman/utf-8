@@ -11,7 +11,7 @@ int main(void) {
 	int ret_code = EXIT_FAILURE;
 	errno = 0;
 
-//#define SHOW
+#define SHOW
 	//freopen("UnicodeData.txt", "r", stdin);
 	/* Count 390032. */
 
@@ -19,7 +19,7 @@ int main(void) {
 		size_t read, want, end;
 		enum { ZERO, ONE, TWO, THREE } assist_size;
 		/* Pieces of code-point from end; size-terminated. `nul`-terminated. */
-		union { char c; uint8_t u; } assist[3], utf8[/*5*//*8192*/32768];
+		union { char c; uint8_t u; } assist[3], utf8[5/*8192*//*32768*/];
 	} buffer;
 	buffer.assist_size = ZERO;
 	assert(sizeof buffer.assist >= 3 && sizeof buffer.utf8 > 4);
@@ -113,6 +113,7 @@ int main(void) {
 		}
 		if(buffer.read < buffer.want) break; /* The last. */
 		find.on_edge = (find.delimit.end.c == &buffer.utf8[0].c + buffer.end);
+		fprintf(stderr, "[reached the end of the buffer; on_edge %d]\n", find.on_edge);
 	}
 	if(ferror(stdin))
 		if(errno) perror("stdin"); else fprintf(stderr, "stdin: Error.\n");

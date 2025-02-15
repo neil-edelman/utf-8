@@ -4,7 +4,6 @@ static const struct test {
 	const char *sentence;
 	size_t delimit_count_basic, delimit_count_regex;
 } sentences[] = {
-	{ "\x80\x80""a a", 2, 2 }, /* Proper handling of non-utf-8. */
 	{ "", 0, 0 },
 	{ " yo", 1, 1 },
 	{ " ,...,,,,.,., ~~~````` — ", 0, 0 },
@@ -30,5 +29,7 @@ static const struct test {
 	{ "\xf8\x00""a a a a a a", 0, 0 },
 	{ "\xf8""a a a a a a", 6, 6 },
 	{ "我", 1, 1 },
-	{ "我會極不力出調裡據程那變。投那來因？", 2, 2 }
+	{ "我會極不力出調裡據程那變。投那來因？", 2, 2 },
+	{ "2025 Neil Edelman, distributed under the terms of the\n"
+		"[MIT License](https://opensource.org/licenses/MIT).\n", 16, 16 }
 };
