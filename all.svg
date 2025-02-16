@@ -4,6 +4,12 @@
  xmlns="http://www.w3.org/2000/svg"
  xmlns:xlink="http://www.w3.org/1999/xlink"
 >
+<style>
+	@media (prefers-color-scheme: dark) {
+		path { stroke: white; };
+		text { fill: white; };
+	}
+</style>
 
 <title>all_timing_combined</title>
 <desc>Produced by GNUPLOT 5.4 patchlevel 4 </desc>
