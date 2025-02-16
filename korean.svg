@@ -4,8 +4,10 @@
  xmlns:xlink="http://www.w3.org/1999/xlink"
 >
 <style>
-   path { stoke: black; }
-   @media (prefers-color-scheme: dark) { path { stroke: white; } }
+	@media (prefers-color-scheme: dark) {
+		path { stroke: white; };
+		text { fill: white; };
+	}
 </style>
 
 <title>korean_timing</title>
